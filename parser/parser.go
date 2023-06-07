@@ -14,7 +14,7 @@ type (
 
 type Parser struct {
 	l      *lexer.Lexer
-	errors []fmt.Stringer
+	errors []string
 
 	curToken  token.Token
 	peekToken token.Token
