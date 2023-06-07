@@ -7,13 +7,6 @@ import (
 	"fmt"
 )
 
-type Parser struct {
-	l         *lexer.Lexer
-	curToken  token.Token
-	peekToken token.Token
-	errors    []string
-}
-
 type (
 	prefixParseFn func() ast.Expression
 	infixParseFn  func(expression ast.Expression) ast.Expression
