@@ -6,10 +6,6 @@ import (
 	"crabscript.rs/token"
 )
 
-
-
-
-
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
@@ -31,12 +27,13 @@ func New(l *lexer.Lexer) *Parser {
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefix(token.Ident, p.parseIdentifier)
 	p.registerPrefix(token.Int, p.parseIntegerLiteral)
+	p.registerPrefix(token.Bang, p.parsePrefixExpression)
+	p.registerPrefix(token.Minus, p.parsePrefixExpression)
 	//p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	//p.registerInfix(token.Ident, p.parseIdentifier)
 
 	return p
 }
-
 
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
@@ -52,4 +49,3 @@ func (p *Parser) ParseProgram() *ast.Program {
 	}
 	return program
 }
-

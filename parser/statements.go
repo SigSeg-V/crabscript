@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"crabscript.rs/token"
 	"crabscript.rs/ast"
+	"crabscript.rs/token"
 	"fmt"
 	"strconv"
 )
@@ -74,6 +74,7 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 func (p *Parser) parseExpression(precedence int) ast.Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
+		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
 	leftExp := prefix()
@@ -99,4 +100,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		p.nextToken()
 	}
 	return stmt
+}
+
+func (p *Parser) parsePrefixExpression() ast.Expression {
+	expression := &ast.PrefixExpression{
+		Token:    p.curToken,
+		Operator: p.curToken.Literal,
+	}
+	p.nextToken()
+
+	expression.Right = p.parseExpression(Prefix)
+	return expression
 }

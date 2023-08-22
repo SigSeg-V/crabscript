@@ -1,10 +1,9 @@
 package lexer
 
 import (
+	"crabscript.rs/token"
 	"unicode"
 	"unicode/utf8"
-
-	"crabscript.rs/token"
 )
 
 type Lexer struct {
