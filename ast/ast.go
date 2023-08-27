@@ -1,7 +1,7 @@
 package ast
 
 type Node interface {
-    	TokenLiteral()   string 
+	TokenLiteral() string
 	String() string
 }
 
