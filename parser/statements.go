@@ -155,3 +155,57 @@ func (p *Parser) parseGroupedExpression() ast.Expression {
 
 	return exp
 }
+
+func (p *Parser) parseIfExpression() ast.Expression {
+	expression := &ast.IfExpression{Token: p.curToken}
+
+	// parsing the 'if (<Condition>)' expression
+	if !p.expectPeek(token.LParen) {
+		return nil
+	}
+
+	p.nextToken()
+	expression.Condition = p.parseExpression(Lowest)
+
+	if !p.expectPeek(token.RParen) {
+		return nil
+	}
+
+	// expecting block to follow Condition
+	if !p.expectPeek(token.LBrace) {
+		return nil
+	}
+
+	expression.Consequence = p.parseBlockStatement()
+
+	// parsing the 'else' body
+	if p.peekTokenIs(token.Else) {
+		p.nextToken()
+
+		// expecting block to follow
+		if !p.expectPeek(token.LBrace) {
+			return nil
+		}
+
+		expression.Alternative = p.parseBlockStatement()
+	}
+
+	return expression
+}
+
+// parse block until we hit '}' or Eof
+func (p *Parser) parseBlockStatement() *ast.BlockStatement {
+	block := &ast.BlockStatement{Token: p.curToken}
+	block.Statements = []ast.Statement{}
+
+	p.nextToken()
+
+	for !p.curTokenIs(token.RBrace) && !p.curTokenIs(token.Eof) {
+		stmt := p.parseStatement()
+		if stmt != nil {
+			block.Statements = append(block.Statements, stmt)
+		}
+		p.nextToken()
+	}
+	return block
+}

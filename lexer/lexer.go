@@ -6,6 +6,8 @@ import (
 	"unicode/utf8"
 )
 
+// A UTF-8 lexer.
+// Yes, that means you can write code in emoji, for better or worse.
 type Lexer struct {
 	input        string
 	position     int  // current index into input
@@ -20,6 +22,7 @@ func New(input string) *Lexer {
 	return l
 }
 
+// Gets the next char and increments index
 func (l *Lexer) readChar() {
 	inpSlice := l.input[l.readPosition:]
 	runeChar, runeSize := utf8.DecodeRune([]byte(inpSlice))
@@ -32,6 +35,7 @@ func (l *Lexer) readChar() {
 	l.readPosition += runeSize
 }
 
+// Gets current char being read
 func (l *Lexer) peekChar() rune {
 	inpSlice := l.input[l.readPosition:]
 	runeChar, _ := utf8.DecodeRune([]byte(inpSlice))
@@ -42,6 +46,8 @@ func (l *Lexer) peekChar() rune {
 	}
 }
 
+// moves to the next token, in cases such as '==' this would move 2 bytes
+// instead of 1.
 func (l *Lexer) NextToken() token.Token {
 	var tok token.Token
 
@@ -111,6 +117,7 @@ func (l *Lexer) NextToken() token.Token {
 	return tok
 }
 
+// creates a token from a rune type
 func newToken(tokenType token.TokenType, ch rune) token.Token {
 	str := ""
 	if ch != 0 {
