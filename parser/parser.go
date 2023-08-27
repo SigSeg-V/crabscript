@@ -6,6 +6,8 @@ import (
 	"crabscript.rs/token"
 )
 
+// Implementation of the Pratt (top-down) parser.
+// Ref: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 type Parser struct {
 	l      *lexer.Lexer
 	errors []string
@@ -17,6 +19,7 @@ type Parser struct {
 	infixParseFns  map[token.TokenType]infixParseFn
 }
 
+// Inits Parser instructions
 func New(l *lexer.Lexer) *Parser {
 	p := &Parser{l: l, errors: []string{}}
 
@@ -31,6 +34,8 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.Minus, p.parsePrefixExpression)
 	p.registerPrefix(token.True, p.parseBoolean)
 	p.registerPrefix(token.False, p.parseBoolean)
+	p.registerPrefix(token.LParen, p.parseGroupedExpression)
+
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.Plus, p.parseInfixExpression)
 	p.registerInfix(token.Minus, p.parseInfixExpression)
@@ -44,6 +49,7 @@ func New(l *lexer.Lexer) *Parser {
 	return p
 }
 
+// Initiates parsing of read string
 func (p *Parser) ParseProgram() *ast.Program {
 	program := &ast.Program{}
 	program.Statements = []ast.Statement{}
