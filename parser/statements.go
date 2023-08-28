@@ -209,3 +209,83 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	}
 	return block
 }
+
+func (p *Parser) parseFunctionLiteral() ast.Expression {
+	lit := &ast.FunctionLiteral{Token: p.curToken}
+
+	// parsing params for fn
+	if !p.expectPeek(token.LParen) {
+		return nil
+	}
+
+	lit.Parameters = p.parseFunctionParameters()
+
+	// expecting body of function after dealing with params
+	if !p.expectPeek(token.LBrace) {
+		return nil
+	}
+
+	lit.Body = p.parseBlockStatement()
+
+	return lit
+}
+
+func (p *Parser) parseFunctionParameters() []*ast.Identifier {
+	ident := []*ast.Identifier{}
+
+	// no params, increment token
+	if p.peekTokenIs(token.RParen) {
+		p.nextToken()
+		return ident
+	}
+
+	p.nextToken()
+
+	id := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+	ident = append(ident, id)
+
+	for p.peekTokenIs(token.Comma) {
+		p.nextToken()
+		p.nextToken()
+
+		param := &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+		ident = append(ident, param)
+	}
+	if !p.expectPeek(token.RParen) {
+		return nil
+	}
+
+	return ident
+}
+
+func (p *Parser) parseCallExpression(function ast.Expression) ast.Expression {
+	exp := &ast.CallExpression{Token: p.curToken, Function: function}
+	exp.Arguments = p.parseCallArguments()
+
+	return exp
+}
+
+func (p *Parser) parseCallArguments() []ast.Expression {
+	args := []ast.Expression{}
+
+	if p.peekTokenIs(token.RParen) {
+		p.nextToken()
+		return args
+	}
+
+	p.nextToken()
+	args = append(args, p.parseExpression(Lowest))
+
+	for p.peekTokenIs(token.Comma) {
+		p.nextToken()
+		p.nextToken()
+
+		args = append(args, p.parseExpression(Lowest))
+	}
+
+	if !p.expectPeek(token.RParen) {
+		return nil
+	}
+
+	return args
+}

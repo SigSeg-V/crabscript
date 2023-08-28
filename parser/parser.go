@@ -36,6 +36,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerPrefix(token.False, p.parseBoolean)
 	p.registerPrefix(token.LParen, p.parseGroupedExpression)
 	p.registerPrefix(token.If, p.parseIfExpression)
+	p.registerPrefix(token.Function, p.parseFunctionLiteral)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
 	p.registerInfix(token.Plus, p.parseInfixExpression)
@@ -46,6 +47,7 @@ func New(l *lexer.Lexer) *Parser {
 	p.registerInfix(token.NEq, p.parseInfixExpression)
 	p.registerInfix(token.Lt, p.parseInfixExpression)
 	p.registerInfix(token.Gt, p.parseInfixExpression)
+	p.registerInfix(token.LParen, p.parseCallExpression)
 
 	return p
 }
