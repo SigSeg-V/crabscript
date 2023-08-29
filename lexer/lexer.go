@@ -101,13 +101,15 @@ func (l *Lexer) NextToken() token.Token {
 	case 0:
 		tok = newToken(token.Eof, l.ch)
 	default: // character
-		if unicode.IsLetter(l.ch) {
-			tok.Literal = l.readIdentifier()
-			tok.Type = token.LookupIdent(tok.Literal)
-			return tok
-		} else if unicode.IsDigit(l.ch) {
+		if unicode.IsDigit(l.ch) {
 			tok.Type = token.Int
 			tok.Literal = l.readNumber()
+			return tok
+			// TODO assume all non-digit valid chars are usable letters
+			// TODO this will allow emojis as bindings
+		} else if unicode.IsLetter(l.ch) {
+			tok.Literal = l.readIdentifier()
+			tok.Type = token.LookupIdent(tok.Literal)
 			return tok
 		} else {
 			tok = newToken(token.Illegal, l.ch)

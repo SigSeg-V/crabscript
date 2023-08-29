@@ -1,4 +1,4 @@
-module crabscript.rs/parser.go
+module crabscript.rs/parser
 
 go 1.20
 
