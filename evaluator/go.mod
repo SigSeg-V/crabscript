@@ -1,4 +1,4 @@
-module evaluator
+module crabscript.rs/evaluator
 
 replace (
 	crabscript.rs/ast => ../ast
