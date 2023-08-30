@@ -159,3 +159,86 @@ func testNullObject(t *testing.T, obj object.Object) bool {
 
 	return true
 }
+
+func TestReturnStatements(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected int64
+	}{
+		{"return 10;", 10},
+		{"return 10; 9;", 10},
+		{"return 2 * 5; 9;", 10},
+		{"9; return 2 * 5; 9;", 10},
+		{
+			`
+			if (10 > 1) {
+				 if (10 > 1) {
+					  return 10;
+				 }
+				 return 1; 
+			}`,
+			10,
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		testIntegerObject(t, evaluated, tt.expected)
+	}
+}
+
+func TestErrorHandling(t *testing.T) {
+	tests := []struct {
+		input           string
+		expectedMessage string
+	}{
+		{
+			"5 + true;",
+			"types not matching: Integer and Boolean",
+		},
+		{
+			"5 + true; 5;",
+			"types not matching: Integer and Boolean",
+		},
+		{
+			"-true",
+			"unknown operator: -Boolean",
+		},
+		{
+			"true + false;",
+			"unknown operator: Boolean + Boolean",
+		},
+		{
+			"5; true + false; 5",
+			"unknown operator: Boolean + Boolean",
+		},
+		{
+			"if (10 > 1) { true + false; }",
+			"unknown operator: Boolean + Boolean",
+		},
+		{
+			`
+if (10 > 1) {
+  if (10 > 1) {
+    return true + false;
+  }
+return 1; }
+`,
+			"unknown operator: Boolean + Boolean",
+		},
+	}
+
+	for _, tt := range tests {
+		evaluated := testEval(tt.input)
+		errObj, ok := evaluated.(*object.Error)
+		if !ok {
+			t.Errorf("no error object returned. got=%T(%+v)",
+				evaluated, evaluated)
+			continue
+		}
+		if errObj.Message != tt.expectedMessage {
+			t.Errorf("wrong error message. expected=%q, got=%q",
+				tt.expectedMessage, errObj.Message)
+		}
+	}
+}

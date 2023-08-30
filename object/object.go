@@ -11,4 +11,6 @@ const (
 	IntegerObj = "Integer"
 	BooleanObj = "Boolean"
 	NullObj    = "Null"
+	ReturnObj  = "Return"
+	ErrorObj   = "Error"
 )
