@@ -12,7 +12,7 @@ type BlockStatement struct {
 
 func (bs *BlockStatement) statementNode() {}
 
-func (bs *BlockStatement) tokenLiteral() string {
+func (bs *BlockStatement) TokenLiteral() string {
 	return bs.Token.Literal
 }
 

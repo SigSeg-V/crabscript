@@ -12,6 +12,8 @@ func Eval(node ast.Node) object.Object {
 		return evalStatements(node.Statements)
 	case *ast.ExpressionStatement:
 		return Eval(node.Expression)
+	case *ast.BlockStatement:
+		return evalStatements(node.Statements)
 
 	// Expressions
 	case *ast.IntegerLiteral:
@@ -21,9 +23,85 @@ func Eval(node ast.Node) object.Object {
 	case *ast.PrefixExpression:
 		right := Eval(node.Right)
 		return evalPrefixExpression(node.Operator, right)
+	case *ast.InfixExpression:
+		left := Eval(node.Left)
+		right := Eval(node.Right)
+		return evalInfixExpression(node.Operator, left, right)
+	case *ast.IfExpression:
+		return evalIfExpression(node)
 	}
 
 	return nil
+}
+
+func evalIfExpression(node *ast.IfExpression) object.Object {
+	condition := Eval(node.Condition)
+
+	if isTruthy(condition) {
+		return Eval(node.Consequence)
+	} else if node.Alternative != nil {
+		return Eval(node.Alternative)
+	} else {
+		return Null
+	}
+}
+
+func isTruthy(condition object.Object) bool {
+	switch condition {
+	case Null:
+		return false
+	case True:
+		return true
+	case False:
+		return false
+	default:
+		return true
+	}
+}
+
+func evalInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	switch {
+	// int -> int ops
+	case left.Type() == object.IntegerObj && right.Type() == object.IntegerObj:
+		return evalIntegerInfixExpression(operator, left, right)
+	// any -> bool ops
+	case operator == "==":
+		return boolToObject(left == right)
+	case operator == "!=":
+		return boolToObject(left != right)
+	default:
+		return Null
+	}
+}
+
+func evalIntegerInfixExpression(operator string, left object.Object, right object.Object) object.Object {
+	leftValue := left.(*object.Integer).Value
+	rightValue := right.(*object.Integer).Value
+
+	switch operator {
+
+	// int ops returning ints
+	case "+":
+		return &object.Integer{Value: leftValue + rightValue}
+	case "-":
+		return &object.Integer{Value: leftValue - rightValue}
+	case "*":
+		return &object.Integer{Value: leftValue * rightValue}
+	case "/":
+		return &object.Integer{Value: leftValue / rightValue}
+
+	// int ops returning bools
+	case "<":
+		return boolToObject(leftValue < rightValue)
+	case ">":
+		return boolToObject(leftValue > rightValue)
+	case "==":
+		return boolToObject(leftValue == rightValue)
+	case "!=":
+		return boolToObject(leftValue != rightValue)
+	default:
+		return Null
+	}
 }
 
 func evalStatements(stmts []ast.Statement) object.Object {
