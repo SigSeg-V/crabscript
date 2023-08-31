@@ -15,4 +15,5 @@ const (
 	ErrorObj    = "Error"
 	FunctionObj = "Function"
   StringObj   = "String"
+  BuiltinObj  = "Builtin"
 )
