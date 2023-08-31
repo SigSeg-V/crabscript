@@ -15,7 +15,7 @@ The current implemented features are:
 - [x] Functions
 - [x] Closures
 - [ ] Arrays
-- [ ] Builtins
+- [x] Builtins
 
 The parser is using Pratt's algorithm, which is modular and easily extensible.
 The evaluator is an implementation of a tree-walking interpreter and no 
