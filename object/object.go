@@ -14,4 +14,5 @@ const (
 	ReturnObj   = "Return"
 	ErrorObj    = "Error"
 	FunctionObj = "Function"
+  StringObj   = "String"
 )

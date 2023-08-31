@@ -14,6 +14,7 @@ const (
 	// identifiers and literals
 	Ident = "Ident" // named var/fns
 	Int   = "Int"
+  String = "String"
 
 	// Ops
 	Assign   = "="

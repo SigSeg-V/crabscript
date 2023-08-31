@@ -23,6 +23,10 @@ return false;
 
 10 == 10;
 10 != 9;
+"foobar"
+"foo bar"
+"crab🦀"
+"🦀crab"
 `
 
 	tests := []struct {
@@ -102,6 +106,10 @@ return false;
 		{token.NEq, "!="},
 		{token.Int, "9"},
 		{token.Semicolon, ";"},
+    {token.String, "foobar"},
+    {token.String, "foo bar"},
+    {token.String, "crab🦀"},
+    {token.String, "🦀crab"},
 		{token.Eof, ""},
 	}
 
