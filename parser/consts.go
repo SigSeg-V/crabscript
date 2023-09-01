@@ -11,6 +11,7 @@ const (
 	Prod
 	Prefix
 	Call
+	Index
 )
 
 // Precedence of binary operations
@@ -24,4 +25,5 @@ var precedences = map[token.TokenType]int{
 	token.Slash:    Prod,
 	token.Asterisk: Prod,
 	token.LParen:   Call,
+	token.LBracket: Index,
 }

@@ -71,10 +71,46 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return callFunction(function, args)
 	case *ast.StringLiteral:
 		return &object.String{Value: node.Value}
-	case *ast.Array
+	case *ast.ArrayLiteral:
+		elements := evalExpressions(node.Elements, env)
+		if len(elements) == 1 && isError(elements[0]) {
+			return elements[0]
+		}
+		return &object.Array{Elements: elements}
+	case *ast.IndexExpression:
+		left := Eval(node.Left, env)
+		if isError(left) {
+			return left
+		}
+		index := Eval(node.Index, env)
+		if isError(index) {
+			return index
+		}
+		return evalIndexExpression(left, index)
 	}
 
 	return nil
+}
+
+func evalIndexExpression(left object.Object, index object.Object) object.Object {
+	switch {
+	case left.Type() == object.ArrayObj && index.Type() == object.IntegerObj:
+		return evalArrayIndexExpression(left, index)
+	default:
+		return newError("index operator not supported: %s", left.Type())
+	}
+}
+
+func evalArrayIndexExpression(left object.Object, index object.Object) object.Object {
+	arrayObj := left.(*object.Array)
+	inx := index.(*object.Integer).Value
+	imax := int64(len(arrayObj.Elements) - 1)
+
+	if inx < 0 || inx > imax {
+		return Null
+	}
+
+	return arrayObj.Elements[inx]
 }
 
 func callFunction(function object.Object, args []object.Object) object.Object {
