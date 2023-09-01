@@ -28,6 +28,7 @@ return false;
 "crab🦀"
 "🦀crab"
 [1, 2];
+{"foo": "bar"}
 `
 
 	tests := []struct {
@@ -117,6 +118,11 @@ return false;
 		{token.Int, "2"},
 		{token.RBracket, "]"},
 		{token.Semicolon, ";"},
+		{token.LBrace, "{"},
+		{token.String, "foo"},
+		{token.Colon, ":"},
+		{token.String, "bar"},
+		{token.RBrace, "}"},
 		{token.Eof, ""},
 	}
 

@@ -17,4 +17,5 @@ const (
 	StringObj   = "String"
 	BuiltinObj  = "Builtin"
 	ArrayObj    = "Array"
+	DictObj     = "Dict"
 )

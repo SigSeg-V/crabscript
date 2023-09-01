@@ -31,6 +31,7 @@ const (
 	// Delims
 	Comma     = "," // var delimiter
 	Semicolon = ";" // line end (along with \n)
+	Colon     = ":" // separator for maps
 
 	// Scopes
 	LParen   = "("

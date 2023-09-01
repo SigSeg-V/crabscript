@@ -105,6 +105,8 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.LBracket, l.ch)
 	case ']':
 		tok = newToken(token.RBracket, l.ch)
+	case ':':
+		tok = newToken(token.Colon, l.ch)
 	case 0:
 		tok = newToken(token.Eof, l.ch)
 	default: // character

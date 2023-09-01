@@ -321,3 +321,33 @@ func (p *Parser) parseIndexExpression(left ast.Expression) ast.Expression {
 
 	return exp
 }
+
+func (p *Parser) parseDictLiteral() ast.Expression {
+	dict := &ast.DictLiteral{Token: p.curToken, Pairs: make(map[ast.Expression]ast.Expression)}
+
+	for !p.peekTokenIs(token.RBrace) {
+		p.nextToken()
+		key := p.parseExpression(Lowest)
+
+		// error when missing colon separator
+		if !p.expectPeek(token.Colon) {
+			return nil
+		}
+
+		p.nextToken()
+		value := p.parseExpression(Lowest)
+
+		dict.Pairs[key] = value
+
+		// error when not continuing nor closing dict definition
+		if !p.peekTokenIs(token.RBrace) && !p.expectPeek(token.Comma) {
+			return nil
+		}
+	}
+
+	if !p.expectPeek(token.RBrace) {
+		return nil
+	}
+
+	return dict
+}
