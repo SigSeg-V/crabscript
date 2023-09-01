@@ -1,6 +1,7 @@
 package evaluator
 
 import (
+	"bytes"
 	"crabscript.rs/object"
 	"unicode/utf8"
 )
@@ -124,6 +125,16 @@ var builtins = map[string]*object.Builtin{
 			newElements[length] = args[1]
 
 			return &object.Array{Elements: newElements}
+		},
+	},
+	"puts": {
+		Fn: func(args ...object.Object) object.Object {
+			var out bytes.Buffer
+			for _, obj := range args {
+				out.WriteString(obj.Inspect())
+			}
+			println(out.String())
+			return Null
 		},
 	},
 }
