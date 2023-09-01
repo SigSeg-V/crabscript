@@ -27,13 +27,14 @@ return false;
 "foo bar"
 "crab🦀"
 "🦀crab"
+[1, 2];
 `
 
 	tests := []struct {
 		expectedType    token.TokenType
 		expectedLiteral string
 	}{
-	{token.Let, "let"},
+		{token.Let, "let"},
 		{token.Ident, "five"},
 		{token.Assign, "="},
 		{token.Int, "5"},
@@ -106,10 +107,16 @@ return false;
 		{token.NEq, "!="},
 		{token.Int, "9"},
 		{token.Semicolon, ";"},
-    {token.String, "foobar"},
-    {token.String, "foo bar"},
-    {token.String, "crab🦀"},
-    {token.String, "🦀crab"},
+		{token.String, "foobar"},
+		{token.String, "foo bar"},
+		{token.String, "crab🦀"},
+		{token.String, "🦀crab"},
+		{token.LBracket, "["},
+		{token.Int, "1"},
+		{token.Comma, ","},
+		{token.Int, "2"},
+		{token.RBracket, "]"},
+		{token.Semicolon, ";"},
 		{token.Eof, ""},
 	}
 

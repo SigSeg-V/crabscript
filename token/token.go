@@ -12,9 +12,9 @@ const (
 	Eof     = "Eof"     // end of file
 
 	// identifiers and literals
-	Ident = "Ident" // named var/fns
-	Int   = "Int"
-  String = "String"
+	Ident  = "Ident" // named var/fns
+	Int    = "Int"
+	String = "String"
 
 	// Ops
 	Assign   = "="
@@ -33,10 +33,12 @@ const (
 	Semicolon = ";" // line end (along with \n)
 
 	// Scopes
-	LParen = "("
-	RParen = ")"
-	LBrace = "{"
-	RBrace = "}"
+	LParen   = "("
+	RParen   = ")"
+	LBrace   = "{"
+	RBrace   = "}"
+	LBracket = "["
+	RBracket = "]"
 
 	// Keywords
 	Function = "Function"

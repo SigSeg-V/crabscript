@@ -98,9 +98,13 @@ func (l *Lexer) NextToken() token.Token {
 		tok = newToken(token.Slash, l.ch)
 	case ',':
 		tok = newToken(token.Comma, l.ch)
-  case '"': 
-    tok.Type = token.String
-    tok.Literal = l.readString()
+	case '"':
+		tok.Type = token.String
+		tok.Literal = l.readString()
+	case '[':
+		tok = newToken(token.LBracket, l.ch)
+	case ']':
+		tok = newToken(token.RBracket, l.ch)
 	case 0:
 		tok = newToken(token.Eof, l.ch)
 	default: // character
@@ -123,16 +127,16 @@ func (l *Lexer) NextToken() token.Token {
 }
 
 func (l *Lexer) readString() string {
-  position := l.position + 1
+	position := l.position + 1
 
-  for {
-    l.readChar()
-    if l.ch == '"' || l.ch == 0 {
-      break
-    }
-  }
+	for {
+		l.readChar()
+		if l.ch == '"' || l.ch == 0 {
+			break
+		}
+	}
 
-  return l.input[position:l.position]
+	return l.input[position:l.position]
 }
 
 // creates a token from a rune type
