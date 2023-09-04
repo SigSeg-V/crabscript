@@ -25,6 +25,37 @@ func New() *Compiler {
 
 // TODO: Write compiler... lol
 func (c *Compiler) Compile(node ast.Node) error {
+	switch node := node.(type) {
+	case *ast.Program:
+		for _, st := range node.Statements {
+			err := c.Compile(st)
+			if err != nil {
+				return err
+			}
+		}
+
+	case *ast.ExpressionStatement:
+		err := c.Compile(node.Expression)
+		if err != nil {
+			return err
+		}
+
+	case *ast.InfixExpression:
+		err := c.Compile(node.Left)
+		if err != nil {
+			return err
+		}
+
+		err = c.Compile(node.Right)
+		if err != nil {
+			return err
+		}
+
+	case *ast.IntegerLiteral:
+		integer := &object.Integer{Value: node.Value}
+		c.emit(code.OpConstant, c.addConstant(integer))
+	}
+
 	return nil
 }
 
@@ -33,4 +64,26 @@ func (c *Compiler) Bytecode() *Bytecode {
 		Instructions: c.instructions,
 		Constants:    c.constants,
 	}
+}
+
+// Adds a constant to the constant pool
+// Returns the new location of the stack pointer (end of the array)
+func (c *Compiler) addConstant(obj object.Object) int {
+	c.constants = append(c.constants, obj)
+	return len(c.constants) - 1
+}
+
+// Generate an instruction and add to results
+// Returns the starting position of the new instruction
+func (c *Compiler) emit(op code.Opcode, operands ...int) int {
+	in := code.Make(op, operands...)
+	return c.addInstruction(in)
+}
+
+// Add instructions to stack
+// returns position of the added instruction
+func (c *Compiler) addInstruction(instructions []byte) int {
+	posNewInstruction := len(c.instructions)
+	c.instructions = append(c.instructions, instructions...)
+	return posNewInstruction
 }
