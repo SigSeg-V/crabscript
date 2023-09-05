@@ -4,6 +4,7 @@ import (
 	"crabscript.rs/ast"
 	"crabscript.rs/code"
 	"crabscript.rs/object"
+	"fmt"
 )
 
 type Compiler struct {
@@ -45,10 +46,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if err != nil {
 			return err
 		}
-
 		err = c.Compile(node.Right)
 		if err != nil {
 			return err
+		}
+		// check operator in infix position
+		switch node.Operator {
+		case "+":
+			c.emit(code.OpAdd)
+		default:
+			return fmt.Errorf("unknown opeator: %s", node.Operator)
 		}
 
 	case *ast.IntegerLiteral:

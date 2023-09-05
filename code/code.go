@@ -15,6 +15,7 @@ type Opcode byte
 // Enum of opcodes in use
 const (
 	OpConstant Opcode = iota
+	OpAdd
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -25,6 +26,7 @@ type Definition struct {
 
 var definitions = map[Opcode]*Definition{
 	OpConstant: {"OpConstant", []int{2}}, // max of 65536 constants in constant pool
+	OpAdd:      {"OpAdd", []int{}},
 }
 
 // Lookup returns relevant debugging info for op if available
@@ -64,6 +66,8 @@ func (instructions Instructions) fmtInstruction(def *Definition, operands []int)
 	}
 
 	switch operandCount {
+	case 0:
+		return def.Name
 	case 1:
 		return fmt.Sprintf("%s %d", def.Name, operands[0])
 	}

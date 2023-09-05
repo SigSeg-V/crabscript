@@ -39,12 +39,23 @@ func (vm *Vm) Run() error {
 	for ip := 0; ip < len(vm.instructions); ip++ {
 		op := code.Opcode(vm.instructions[ip])
 
+		// decoding operations
 		switch op {
 		case code.OpConstant:
 			constIdx := code.ReadUint16(vm.instructions[ip+1:])
 			ip += 2
-
+			// putting new const onto stack
 			err := vm.push(vm.constants[constIdx])
+			if err != nil {
+				return err
+			}
+
+		case code.OpAdd:
+			right := vm.pop()
+			rightValue := right.(*object.Integer).Value
+			left := vm.pop()
+			leftValue := left.(*object.Integer).Value
+			err := vm.push(&object.Integer{Value: leftValue + rightValue})
 			if err != nil {
 				return err
 			}
@@ -64,4 +75,10 @@ func (vm *Vm) push(o object.Object) error {
 	vm.sp++
 
 	return nil
+}
+
+func (vm *Vm) pop() object.Object {
+	o := vm.stack[vm.sp-1]
+	vm.sp--
+	return o
 }
