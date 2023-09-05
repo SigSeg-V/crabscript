@@ -87,7 +87,7 @@ func (vm *Vm) LastPoppedStackElem() object.Object {
 	return vm.stack[vm.sp]
 }
 
-func (vm *Vm) execBinaryOp(op code.Opcode) error {
+func (vm *Vm) execBinaryIntOp(op code.Opcode) error {
 	right := vm.pop()
 	rightValue := right.(*object.Integer).Value
 	left := vm.pop()
