@@ -16,6 +16,10 @@ type Opcode byte
 const (
 	OpConstant Opcode = iota
 	OpAdd
+	OpSub
+	OpMul
+	OpDiv
+	OpPop
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -26,7 +30,11 @@ type Definition struct {
 
 var definitions = map[Opcode]*Definition{
 	OpConstant: {"OpConstant", []int{2}}, // max of 65536 constants in constant pool
-	OpAdd:      {"OpAdd", []int{}},
+	OpAdd:      {"OpAdd", []int{}},       // add the topmost 2 elem of stack
+	OpSub:      {"OpSub", []int{}},       // add the topmost 2 elem of stack
+	OpMul:      {"OpMul", []int{}},       // add the topmost 2 elem of stack
+	OpDiv:      {"OpDiv", []int{}},       // add the topmost 2 elem of stack
+	OpPop:      {"OpPop", []int{}},       // cleans the stack after an expression is evaluated
 }
 
 // Lookup returns relevant debugging info for op if available

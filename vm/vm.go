@@ -59,6 +59,39 @@ func (vm *Vm) Run() error {
 			if err != nil {
 				return err
 			}
+
+		case code.OpSub:
+			right := vm.pop()
+			rightVal := right.(*object.Integer).Value
+			left := vm.pop()
+			leftVal := left.(*object.Integer).Value
+			err := vm.push(&object.Integer{Value: leftVal - rightVal})
+			if err != nil {
+				return err
+			}
+
+		case code.OpMul:
+			right := vm.pop()
+			rightVal := right.(*object.Integer).Value
+			left := vm.pop()
+			leftVal := left.(*object.Integer).Value
+			err := vm.push(&object.Integer{Value: leftVal * rightVal})
+			if err != nil {
+				return err
+			}
+
+		case code.OpDiv:
+			right := vm.pop()
+			rightVal := right.(*object.Integer).Value
+			left := vm.pop()
+			leftVal := left.(*object.Integer).Value
+			err := vm.push(&object.Integer{Value: leftVal / rightVal})
+			if err != nil {
+				return err
+			}
+		case code.OpPop:
+			vm.pop()
+
 		}
 	}
 
@@ -81,4 +114,9 @@ func (vm *Vm) pop() object.Object {
 	o := vm.stack[vm.sp-1]
 	vm.sp--
 	return o
+}
+
+// Returns item popped from stack last
+func (vm *Vm) LastPoppedStackElem() object.Object {
+	return vm.stack[vm.sp]
 }
