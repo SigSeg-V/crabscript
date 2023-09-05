@@ -2,10 +2,10 @@ package repl
 
 import (
 	"bufio"
-	"crabscript.rs/evaluator"
+	"crabscript.rs/compiler"
 	"crabscript.rs/lexer"
-	"crabscript.rs/object"
 	"crabscript.rs/parser"
+	"crabscript.rs/vm"
 	"fmt"
 	"io"
 )
@@ -14,7 +14,7 @@ const Prompt = "=> "
 
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
-	env := object.NewEnvironment()
+	// env := object.NewEnvironment()
 
 	for {
 		fmt.Printf(Prompt)
@@ -34,11 +34,21 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		evaluated := evaluator.Eval(program, env)
-		if evaluated != nil {
-			io.WriteString(out, evaluated.Inspect())
-			io.WriteString(out, "\n")
+		comp := compiler.New()
+		err := comp.Compile(program)
+		if err != nil {
+			fmt.Fprintf(out, "Compilation failed: %s", err)
 		}
+
+		machine := vm.New(comp.Bytecode())
+		err = machine.Run()
+		if err != nil {
+			fmt.Fprintf(out, "Bytecode failed to execute: %s", err)
+			continue
+		}
+		stackTop := machine.StackTop()
+		io.WriteString(out, stackTop.Inspect())
+		io.WriteString(out, "\n")
 	}
 }
 
