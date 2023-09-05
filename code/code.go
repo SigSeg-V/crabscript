@@ -20,6 +20,8 @@ const (
 	OpMul
 	OpDiv
 	OpPop
+	OpTrue
+	OpFalse
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -35,6 +37,8 @@ var definitions = map[Opcode]*Definition{
 	OpMul:      {"OpMul", []int{}},       // add the topmost 2 elem of stack
 	OpDiv:      {"OpDiv", []int{}},       // add the topmost 2 elem of stack
 	OpPop:      {"OpPop", []int{}},       // cleans the stack after an expression is evaluated
+	OpTrue:     {"OpTrue", []int{}},      // represents `true` literal
+	OpFalse:    {"OpFalse", []int{}},     // represents `false` literal
 }
 
 // Lookup returns relevant debugging info for op if available
