@@ -50,45 +50,11 @@ func (vm *Vm) Run() error {
 				return err
 			}
 
-		case code.OpAdd:
-			right := vm.pop()
-			rightValue := right.(*object.Integer).Value
-			left := vm.pop()
-			leftValue := left.(*object.Integer).Value
-			err := vm.push(&object.Integer{Value: leftValue + rightValue})
-			if err != nil {
+		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv:
+			if err := vm.execBinaryOp(op); err != nil {
 				return err
 			}
 
-		case code.OpSub:
-			right := vm.pop()
-			rightVal := right.(*object.Integer).Value
-			left := vm.pop()
-			leftVal := left.(*object.Integer).Value
-			err := vm.push(&object.Integer{Value: leftVal - rightVal})
-			if err != nil {
-				return err
-			}
-
-		case code.OpMul:
-			right := vm.pop()
-			rightVal := right.(*object.Integer).Value
-			left := vm.pop()
-			leftVal := left.(*object.Integer).Value
-			err := vm.push(&object.Integer{Value: leftVal * rightVal})
-			if err != nil {
-				return err
-			}
-
-		case code.OpDiv:
-			right := vm.pop()
-			rightVal := right.(*object.Integer).Value
-			left := vm.pop()
-			leftVal := left.(*object.Integer).Value
-			err := vm.push(&object.Integer{Value: leftVal / rightVal})
-			if err != nil {
-				return err
-			}
 		case code.OpPop:
 			vm.pop()
 
@@ -119,4 +85,28 @@ func (vm *Vm) pop() object.Object {
 // Returns item popped from stack last
 func (vm *Vm) LastPoppedStackElem() object.Object {
 	return vm.stack[vm.sp]
+}
+
+func (vm *Vm) execBinaryOp(op code.Opcode) error {
+	right := vm.pop()
+	rightValue := right.(*object.Integer).Value
+	left := vm.pop()
+	leftValue := left.(*object.Integer).Value
+
+	var err error = nil
+	switch op {
+	case code.OpAdd:
+		err = vm.push(&object.Integer{Value: leftValue + rightValue})
+
+	case code.OpSub:
+		err = vm.push(&object.Integer{Value: leftValue - rightValue})
+
+	case code.OpMul:
+		err = vm.push(&object.Integer{Value: leftValue * rightValue})
+
+	case code.OpDiv:
+		err = vm.push(&object.Integer{Value: leftValue / rightValue})
+	}
+
+	return err
 }
