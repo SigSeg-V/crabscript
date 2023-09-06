@@ -22,6 +22,11 @@ const (
 	OpPop
 	OpTrue
 	OpFalse
+	OpEq
+	OpNe
+	OpGt
+	OpNeg
+	OpBang
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -39,6 +44,11 @@ var definitions = map[Opcode]*Definition{
 	OpPop:      {"OpPop", []int{}},       // cleans the stack after an expression is evaluated
 	OpTrue:     {"OpTrue", []int{}},      // represents `true` literal
 	OpFalse:    {"OpFalse", []int{}},     // represents `false` literal
+	OpEq:       {"OpEq", []int{}},        // equals comparator
+	OpNe:       {"OpNe", []int{}},        // not equals comparator
+	OpGt:       {"OpGt", []int{}},        // greater than comparator
+	OpNeg:      {"OpNeg", []int{}},       // negation operator
+	OpBang:     {"OpBang", []int{}},      // `not` operator
 }
 
 // Lookup returns relevant debugging info for op if available

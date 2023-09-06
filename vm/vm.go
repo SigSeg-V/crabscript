@@ -12,6 +12,14 @@ const stackSize = 2048
 var True = &object.Boolean{Value: true}
 var False = &object.Boolean{Value: false}
 
+func boolToObject(input bool) *object.Boolean {
+	if input {
+		return True
+	}
+
+	return False
+}
+
 type Vm struct {
 	constants    []object.Object
 	instructions code.Instructions
@@ -70,6 +78,21 @@ func (vm *Vm) Run() error {
 				return err
 			}
 
+		case code.OpNe, code.OpEq, code.OpGt:
+			if err := vm.execComparison(op); err != nil {
+				return err
+			}
+
+		case code.OpNeg:
+			if err := vm.execNegation(); err != nil {
+				return err
+			}
+
+		case code.OpBang:
+			if err := vm.execBoolNegation(); err != nil {
+				return err
+			}
+
 		case code.OpPop:
 			vm.pop()
 		}
@@ -125,4 +148,85 @@ func (vm *Vm) execBinaryIntOp(op code.Opcode) error {
 	}
 
 	return err
+}
+
+func (vm *Vm) execComparison(op code.Opcode) error {
+	right := vm.pop()
+	left := vm.pop()
+
+	if left.Type() == object.IntegerObj || right.Type() == object.IntegerObj {
+		return vm.execIntComparison(op, left, right)
+	}
+
+	switch op {
+	case code.OpEq:
+		return vm.push(boolToObject(left == right))
+	case code.OpNe:
+		return vm.push(boolToObject(left != right))
+	default:
+		return fmt.Errorf("unknown operator: %d", op)
+	}
+}
+
+func (vm *Vm) execIntComparison(op code.Opcode, left object.Object, right object.Object) error {
+	leftVal := left.(*object.Integer).Value
+	rightVal := right.(*object.Integer).Value
+
+	switch op {
+	case code.OpEq:
+		return vm.push(boolToObject(leftVal == rightVal))
+	case code.OpNe:
+		return vm.push(boolToObject(leftVal != rightVal))
+	case code.OpGt: // less than is converted to Gt in compiler
+		return vm.push(boolToObject(leftVal > rightVal))
+	default:
+		return fmt.Errorf("unknown operator: %d", op)
+	}
+}
+
+func (vm *Vm) execNegation() error {
+	right := vm.pop()
+
+	if right.Type() != object.IntegerObj {
+		return fmt.Errorf("illegal operator - on type %s", right.Type())
+	}
+
+	if err := vm.push(&object.Integer{Value: -right.(*object.Integer).Value}); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (vm *Vm) execBoolNegation() error {
+	right := vm.pop()
+
+	switch right.(type) {
+	case *object.Integer:
+		rightVal := right.(*object.Integer).Value
+		if rightVal == 0 {
+			if err := vm.push(True); err != nil {
+				return err
+			}
+		} else {
+			if err := vm.push(False); err != nil {
+				return err
+			}
+		}
+
+	case *object.Boolean:
+		if right == True {
+			if err := vm.push(False); err != nil {
+				return err
+			}
+		} else {
+			if err := vm.push(True); err != nil {
+				return err
+			}
+		}
+
+	default:
+		return fmt.Errorf("illegal operator ! for type: %s", right.Type())
+	}
+	return nil
 }

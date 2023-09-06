@@ -42,7 +42,35 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 		c.emit(code.OpPop) // Remove result from stack when not needed
 
+	case *ast.PrefixExpression:
+		err := c.Compile(node.Right)
+		if err != nil {
+			return err
+		}
+		switch node.Operator {
+		case "!":
+			c.emit(code.OpBang)
+		case "-":
+			c.emit(code.OpNeg)
+		default:
+			return fmt.Errorf("unknown operator: %s", node.Operator)
+		}
+
 	case *ast.InfixExpression:
+		// reorder left and right values to reuse OpGt
+		if node.Operator == "<" {
+			err := c.Compile(node.Right)
+			if err != nil {
+				return err
+			}
+			err = c.Compile(node.Left)
+			if err != nil {
+				return err
+			}
+			c.emit(code.OpGt)
+			return nil
+		}
+
 		err := c.Compile(node.Left)
 		if err != nil {
 			return err
@@ -61,6 +89,12 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.emit(code.OpMul)
 		case "/":
 			c.emit(code.OpDiv)
+		case ">":
+			c.emit(code.OpGt)
+		case "==":
+			c.emit(code.OpEq)
+		case "!=":
+			c.emit(code.OpNe)
 		default:
 			return fmt.Errorf("unknown operator: %s", node.Operator)
 		}
