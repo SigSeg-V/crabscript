@@ -228,6 +228,30 @@ func testInstructions(
 	return nil
 }
 
+func TestConditionals(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `if (true) { 10 }; 3333;`,
+			expectedConstants: []interface{}{10, 3333},
+			expectedInstructions: []code.Instructions{
+				// 0
+				code.Make(code.OpTrue),
+				// 1
+				code.Make(code.OpJmpNt, 7),
+				// 4
+				code.Make(code.OpConstant, 0),
+				// 7
+				code.Make(code.OpPop),
+				// 8
+				code.Make(code.OpConstant, 1),
+				// 11
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
 func concatInstructions(s []code.Instructions) code.Instructions {
 	out := code.Instructions{}
 	for _, ins := range s {

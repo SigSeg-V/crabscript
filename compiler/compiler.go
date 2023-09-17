@@ -10,6 +10,9 @@ import (
 type Compiler struct {
 	instructions code.Instructions
 	constants    []object.Object
+
+	lastInstruction     EmittedInstruction // last emitted op
+	previousInstruction EmittedInstruction // 2nd last emitted op
 }
 
 type Bytecode struct {
@@ -17,10 +20,17 @@ type Bytecode struct {
 	Constants    []object.Object
 }
 
+type EmittedInstruction struct {
+	Opcode   code.Opcode
+	Position int
+}
+
 func New() *Compiler {
 	return &Compiler{
-		instructions: code.Instructions{},
-		constants:    []object.Object{},
+		instructions:        code.Instructions{},
+		constants:           []object.Object{},
+		lastInstruction:     EmittedInstruction{},
+		previousInstruction: EmittedInstruction{},
 	}
 }
 
@@ -109,6 +119,34 @@ func (c *Compiler) Compile(node ast.Node) error {
 		} else {
 			c.emit(code.OpFalse)
 		}
+
+	case *ast.IfExpression:
+		err := c.Compile(node.Condition)
+		if err != nil {
+			return err
+		}
+		// using a number fresh from my ass that will be back patched later
+		jmpPos := c.emit(code.OpJmpNt, 9999)
+		err = c.Compile(node.Consequence)
+		if err != nil {
+			return err
+		}
+		// remove extra pop so that if blocks can be used for assignment
+		if c.lastInstructionIsPop() {
+			c.removeLastPop()
+		}
+		// get point to jmp to if condition is not true
+		afterConsequencePos := len(c.instructions)
+		// back patch the jmp length
+		c.changeOperand(jmpPos, afterConsequencePos)
+
+	case *ast.BlockStatement:
+		for _, st := range node.Statements {
+			err := c.Compile(st)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return nil
@@ -132,7 +170,10 @@ func (c *Compiler) addConstant(obj object.Object) int {
 // Returns the starting position of the new instruction
 func (c *Compiler) emit(op code.Opcode, operands ...int) int {
 	in := code.Make(op, operands...)
-	return c.addInstruction(in)
+	pos := c.addInstruction(in)
+
+	c.setLastInstruction(op, pos)
+	return pos
 }
 
 // Add instructions to stack
@@ -141,4 +182,37 @@ func (c *Compiler) addInstruction(instructions []byte) int {
 	posNewInstruction := len(c.instructions)
 	c.instructions = append(c.instructions, instructions...)
 	return posNewInstruction
+}
+
+// populate the cache of previous instructions - used for jmps
+func (c *Compiler) setLastInstruction(op code.Opcode, pos int) {
+	c.previousInstruction = c.lastInstruction
+	c.lastInstruction = EmittedInstruction{
+		Opcode:   op,
+		Position: pos,
+	}
+}
+
+func (c *Compiler) lastInstructionIsPop() bool {
+	return c.lastInstruction.Opcode == code.OpPop
+}
+
+func (c *Compiler) removeLastPop() {
+	c.instructions = c.instructions[:c.lastInstruction.Position]
+	c.lastInstruction = c.previousInstruction
+}
+
+// back patch instructions at position
+func (c *Compiler) replaceInstruction(pos int, newInstruction []byte) {
+	for i := 0; i < len(newInstruction); i++ {
+		c.instructions[pos+i] = newInstruction[i]
+	}
+}
+
+// back patching operation at opPos
+func (c *Compiler) changeOperand(opPos int, operand int) {
+	op := code.Opcode(c.instructions[opPos])
+	newInstruction := code.Make(op, operand)
+
+	c.replaceInstruction(opPos, newInstruction)
 }

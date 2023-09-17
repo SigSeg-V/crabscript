@@ -14,19 +14,21 @@ type Opcode byte
 
 // Enum of opcodes in use
 const (
-	OpConstant Opcode = iota
-	OpAdd
-	OpSub
-	OpMul
-	OpDiv
-	OpPop
-	OpTrue
-	OpFalse
-	OpEq
-	OpNe
-	OpGt
-	OpNeg
-	OpBang
+	OpConstant Opcode = iota // max of 65536 constants in constant pa
+	OpAdd                    // add the topmost 2 elem of stack
+	OpSub                    // add the topmost 2 elem of stack
+	OpMul                    // add the topmost 2 elem of stack
+	OpDiv                    // add the topmost 2 elem of stack
+	OpPop                    // cleans the stack after an expression
+	OpTrue                   // represents `true` literal
+	OpFalse                  // represents `false` literal
+	OpEq                     // equals comparator
+	OpNe                     // not equals comparator
+	OpGt                     // greater than comparator
+	OpNeg                    // negation operator
+	OpBang                   // `not` operator
+	OpJmp                    // jump operator, for conditionals and
+	OpJmpNt                  // jump when not true, for conditionals
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -49,6 +51,8 @@ var definitions = map[Opcode]*Definition{
 	OpGt:       {"OpGt", []int{}},        // greater than comparator
 	OpNeg:      {"OpNeg", []int{}},       // negation operator
 	OpBang:     {"OpBang", []int{}},      // `not` operator
+	OpJmp:      {"OpJmp", []int{2}},      // jump operator, for conditionals and functions
+	OpJmpNt:    {"OpJmpNt", []int{2}},    // jump when not true, for conditionals
 }
 
 // Lookup returns relevant debugging info for op if available
