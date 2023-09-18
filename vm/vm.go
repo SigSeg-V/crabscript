@@ -95,10 +95,32 @@ func (vm *Vm) Run() error {
 
 		case code.OpPop:
 			vm.pop()
+
+		case code.OpJmp:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip = pos - 1
+
+		case code.OpJmpNt:
+			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2 // move to the condition (past 2 bytes of constants)
+			condition := vm.pop()
+			// evaluate the condition and jmp if needed
+			if !isTruthy(condition) {
+				ip = pos - 1
+			}
 		}
 	}
 
 	return nil
+}
+
+func isTruthy(obj object.Object) bool {
+	switch obj := obj.(type) {
+	case *object.Boolean:
+		return obj.Value
+	default:
+		return true
+	}
 }
 
 // push object onto stack
