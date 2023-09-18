@@ -7,7 +7,8 @@ import (
 	"fmt"
 )
 
-const stackSize = 2048
+const StackSize = 2048
+const GlobalSize = 65536 // maximum number of global variables allowed
 
 var True = &object.Boolean{Value: true}
 var False = &object.Boolean{Value: false}
@@ -25,16 +26,26 @@ type Vm struct {
 	constants    []object.Object
 	instructions code.Instructions
 	stack        []object.Object
+	globals      []object.Object
 	sp           int // stack pointer, always at next free slot at top of stack
+
 }
 
 func New(bytecode *compiler.Bytecode) *Vm {
 	return &Vm{
 		instructions: bytecode.Instructions,
 		constants:    bytecode.Constants,
-		stack:        make([]object.Object, stackSize),
+		stack:        make([]object.Object, StackSize),
+		globals:      make([]object.Object, GlobalSize),
 		sp:           0,
 	}
+}
+
+// for the repl
+func NewWithGblStore(bytecode *compiler.Bytecode, s []object.Object) *Vm {
+	vm := New(bytecode)
+	vm.globals = s
+	return vm
 }
 
 // Retrieves the object at the top of the stack
@@ -115,6 +126,23 @@ func (vm *Vm) Run() error {
 			if err != nil {
 				return err
 			}
+
+		case code.OpSetGbl:
+			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
+			ip += 2
+
+			// add var to global heap
+			vm.globals[globalIndex] = vm.pop()
+
+			// putting the binding to the top of stack
+		case code.OpGetGbl:
+			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
+			ip += 2
+
+			err := vm.push(vm.globals[globalIndex])
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -136,7 +164,7 @@ func isTruthy(obj object.Object) bool {
 
 // push object onto stack
 func (vm *Vm) push(o object.Object) error {
-	if vm.sp >= stackSize {
+	if vm.sp >= StackSize {
 		return fmt.Errorf("stack overflow")
 	}
 

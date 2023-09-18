@@ -13,6 +13,8 @@ type Compiler struct {
 
 	lastInstruction     EmittedInstruction // last emitted op
 	previousInstruction EmittedInstruction // 2nd last emitted op
+
+	symbolTable *SymbolTable // storing variables
 }
 
 type Bytecode struct {
@@ -31,7 +33,15 @@ func New() *Compiler {
 		constants:           []object.Object{},
 		lastInstruction:     EmittedInstruction{},
 		previousInstruction: EmittedInstruction{},
+		symbolTable:         NewSymbolTable(),
 	}
+}
+
+func NewWithState(s *SymbolTable, constants []object.Object) *Compiler {
+	compiler := New()
+	compiler.symbolTable = s
+	compiler.constants = constants
+	return compiler
 }
 
 // TODO: Write compiler... lol
@@ -163,6 +173,23 @@ func (c *Compiler) Compile(node ast.Node) error {
 				return err
 			}
 		}
+
+		// binding a variable
+	case *ast.LetStatement:
+		err := c.Compile(node.Value)
+		if err != nil {
+			return err
+		}
+		symbol := c.symbolTable.Define(node.Name.Value)
+		c.emit(code.OpSetGbl, symbol.Index)
+
+		// retrieving a bound variable from the store
+	case *ast.Identifier:
+		symbol, ok := c.symbolTable.Resolve(node.Value)
+		if !ok {
+			return fmt.Errorf("unresolved symbol: %v", node.Value)
+		}
+		c.emit(code.OpGetGbl, symbol.Index)
 	}
 
 	return nil

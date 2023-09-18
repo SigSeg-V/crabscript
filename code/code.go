@@ -30,6 +30,8 @@ const (
 	OpJmp                    // jump operator, for conditionals and
 	OpJmpNt                  // jump when not true, for conditionals
 	OpNull                   // *NULL*
+	OpGetGbl                 // getting bound variables from stack
+	OpSetGbl                 // setting bound variables from stack
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -55,6 +57,8 @@ var definitions = map[Opcode]*Definition{
 	OpJmp:      {"OpJmp", []int{2}},      // jump operator, for conditionals and functions
 	OpJmpNt:    {"OpJmpNt", []int{2}},    // jump when not true, for conditionals
 	OpNull:     {"OpNull", []int{}},      // *NULL*
+	OpGetGbl:   {"OpGetGbl", []int{2}},   // getting bound variables from the stack
+	OpSetGbl:   {"OpSetGbl", []int{2}},   // setting bound variables from the stack
 }
 
 // Lookup returns relevant debugging info for op if available

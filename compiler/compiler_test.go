@@ -279,6 +279,50 @@ if (true) { 10 }; 3333;
 	runCompilerTests(t, tests)
 }
 
+func TestGlobalLetStatements(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+let one = 1;
+let two = 2;
+`,
+			expectedConstants: []interface{}{1, 2}, expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpConstant, 1),
+				code.Make(code.OpSetGbl, 1),
+			}},
+		{
+			input: `
+let one = 1;
+one;
+`,
+			expectedConstants: []interface{}{1}, expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpGetGbl, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+let one = 1;
+let two = one;
+two;
+`,
+			expectedConstants: []interface{}{1}, expectedInstructions: []code.Instructions{
+				code.Make(code.OpConstant, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpGetGbl, 0),
+				code.Make(code.OpSetGbl, 1),
+				code.Make(code.OpGetGbl, 1),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
 func concatInstructions(s []code.Instructions) code.Instructions {
 	out := code.Instructions{}
 	for _, ins := range s {

@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"crabscript.rs/compiler"
 	"crabscript.rs/lexer"
+	"crabscript.rs/object"
 	"crabscript.rs/parser"
 	"crabscript.rs/vm"
 	"fmt"
@@ -15,6 +16,10 @@ const Prompt = "=> "
 func Start(in io.Reader, out io.Writer) {
 	scanner := bufio.NewScanner(in)
 	// env := object.NewEnvironment()
+
+	constants := []object.Object{}
+	globals := make([]object.Object, vm.GlobalSize)
+	symbolTable := compiler.NewSymbolTable()
 
 	for {
 		fmt.Printf(Prompt)
@@ -34,13 +39,13 @@ func Start(in io.Reader, out io.Writer) {
 			continue
 		}
 
-		comp := compiler.New()
+		comp := compiler.NewWithState(symbolTable, constants)
 		err := comp.Compile(program)
 		if err != nil {
 			fmt.Fprintf(out, "Compilation failed: %s", err)
 		}
 
-		machine := vm.New(comp.Bytecode())
+		machine := vm.NewWithGblStore(comp.Bytecode(), globals)
 		err = machine.Run()
 		if err != nil {
 			fmt.Fprintf(out, "Bytecode failed to execute: %s", err)
