@@ -126,7 +126,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		// using a number fresh from my ass that will be back patched later
-		jmpPos := c.emit(code.OpJmpNt, 9999)
+		jmpNtPos := c.emit(code.OpJmpNt, 9999)
 		err = c.Compile(node.Consequence)
 		if err != nil {
 			return err
@@ -138,7 +138,28 @@ func (c *Compiler) Compile(node ast.Node) error {
 		// get point to jmp to if condition is not true
 		afterConsequencePos := len(c.instructions)
 		// back patch the jmp length
-		c.changeOperand(jmpPos, afterConsequencePos)
+		c.changeOperand(jmpNtPos, afterConsequencePos)
+		// add jump target when there is not "else" clause
+		if node.Alternative == nil {
+			afterConsequencePos := len(c.instructions)
+			c.changeOperand(jmpNtPos, afterConsequencePos)
+		} else {
+			// yet another number fresh from my ass
+			jmpPos := c.emit(code.OpJmp, 9999)
+
+			afterConsequencePos := len(c.instructions)
+			c.changeOperand(jmpNtPos, afterConsequencePos)
+
+			err := c.Compile(node.Alternative)
+			if err != nil {
+				return err
+			}
+			if c.lastInstructionIsPop() {
+				c.removeLastPop()
+			}
+			afterAlternativePos := len(c.instructions)
+			c.changeOperand(jmpPos, afterAlternativePos)
+		}
 
 	case *ast.BlockStatement:
 		for _, st := range node.Statements {
