@@ -125,6 +125,10 @@ func isTruthy(obj object.Object) bool {
 	switch obj := obj.(type) {
 	case *object.Boolean:
 		return obj.Value
+
+	case *object.Null:
+		return false
+
 	default:
 		return true
 	}
@@ -244,15 +248,17 @@ func (vm *Vm) execBoolNegation() error {
 		}
 
 	case *object.Boolean:
-		if right == True {
-			if err := vm.push(False); err != nil {
-				return err
-			}
-		} else {
-			if err := vm.push(True); err != nil {
-				return err
-			}
+		switch right {
+		case True:
+			return vm.push(False)
+		case False:
+			return vm.push(True)
+		default:
+			return vm.push(False)
 		}
+
+	case *object.Null:
+		return vm.push(True)
 
 	default:
 		return fmt.Errorf("illegal operator ! for type: %s", right.Type())
