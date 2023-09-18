@@ -135,21 +135,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if c.lastInstructionIsPop() {
 			c.removeLastPop()
 		}
+		// yet another number fresh from my ass
+		jmpPos := c.emit(code.OpJmp, 9999)
 		// get point to jmp to if condition is not true
 		afterConsequencePos := len(c.instructions)
 		// back patch the jmp length
 		c.changeOperand(jmpNtPos, afterConsequencePos)
-		// add jump target when there is not "else" clause
+		// add jump target
 		if node.Alternative == nil {
-			afterConsequencePos := len(c.instructions)
-			c.changeOperand(jmpNtPos, afterConsequencePos)
+			c.emit(code.OpNull) // jmp target is null when no branch
 		} else {
-			// yet another number fresh from my ass
-			jmpPos := c.emit(code.OpJmp, 9999)
-
-			afterConsequencePos := len(c.instructions)
-			c.changeOperand(jmpNtPos, afterConsequencePos)
-
 			err := c.Compile(node.Alternative)
 			if err != nil {
 				return err
@@ -157,9 +152,9 @@ func (c *Compiler) Compile(node ast.Node) error {
 			if c.lastInstructionIsPop() {
 				c.removeLastPop()
 			}
-			afterAlternativePos := len(c.instructions)
-			c.changeOperand(jmpPos, afterAlternativePos)
 		}
+		afterAlternativePos := len(c.instructions)
+		c.changeOperand(jmpPos, afterAlternativePos)
 
 	case *ast.BlockStatement:
 		for _, st := range node.Statements {

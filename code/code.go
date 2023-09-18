@@ -29,6 +29,7 @@ const (
 	OpBang                   // `not` operator
 	OpJmp                    // jump operator, for conditionals and
 	OpJmpNt                  // jump when not true, for conditionals
+	OpNull                   // *NULL*
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -53,6 +54,7 @@ var definitions = map[Opcode]*Definition{
 	OpBang:     {"OpBang", []int{}},      // `not` operator
 	OpJmp:      {"OpJmp", []int{2}},      // jump operator, for conditionals and functions
 	OpJmpNt:    {"OpJmpNt", []int{2}},    // jump when not true, for conditionals
+	OpNull:     {"OpNull", []int{}},      // *NULL*
 }
 
 // Lookup returns relevant debugging info for op if available

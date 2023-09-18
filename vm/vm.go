@@ -11,6 +11,7 @@ const stackSize = 2048
 
 var True = &object.Boolean{Value: true}
 var False = &object.Boolean{Value: false}
+var Null = &object.Null{}
 
 func boolToObject(input bool) *object.Boolean {
 	if input {
@@ -107,6 +108,12 @@ func (vm *Vm) Run() error {
 			// evaluate the condition and jmp if needed
 			if !isTruthy(condition) {
 				ip = pos - 1
+			}
+
+		case code.OpNull:
+			err := vm.push(Null)
+			if err != nil {
+				return err
 			}
 		}
 	}
