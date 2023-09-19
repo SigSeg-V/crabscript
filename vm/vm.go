@@ -74,7 +74,7 @@ func (vm *Vm) Run() error {
 			}
 
 		case code.OpAdd, code.OpSub, code.OpMul, code.OpDiv:
-			if err := vm.execBinaryIntOp(op); err != nil {
+			if err := vm.execBinaryOp(op); err != nil {
 				return err
 			}
 
@@ -185,25 +185,45 @@ func (vm *Vm) LastPoppedStackElem() object.Object {
 	return vm.stack[vm.sp]
 }
 
-func (vm *Vm) execBinaryIntOp(op code.Opcode) error {
+func (vm *Vm) execBinaryOp(op code.Opcode) error {
 	right := vm.pop()
-	rightValue := right.(*object.Integer).Value
+	rightType := right.Type()
 	left := vm.pop()
-	leftValue := left.(*object.Integer).Value
+	leftType := left.Type()
 
+	switch {
+	case leftType == object.IntegerObj && rightType == object.IntegerObj:
+		return vm.execBinaryIntOp(op, left.(*object.Integer), right.(*object.Integer))
+
+	case leftType == object.StringObj && rightType == object.StringObj:
+		return vm.execBinaryStringOp(op, left.(*object.String), right.(*object.String))
+	default:
+		return fmt.Errorf("unsupported types for binary operation: %s %s", leftType, rightType)
+	}
+}
+
+func (vm *Vm) execBinaryStringOp(op code.Opcode, left *object.String, right *object.String) error {
+	if op != code.OpAdd {
+		return fmt.Errorf("unknown string operator: %d", op)
+	}
+
+	return vm.push(&object.String{Value: left.Value + right.Value})
+}
+
+func (vm *Vm) execBinaryIntOp(op code.Opcode, left *object.Integer, right *object.Integer) error {
 	var err error = nil
 	switch op {
 	case code.OpAdd:
-		err = vm.push(&object.Integer{Value: leftValue + rightValue})
+		err = vm.push(&object.Integer{Value: left.Value + right.Value})
 
 	case code.OpSub:
-		err = vm.push(&object.Integer{Value: leftValue - rightValue})
+		err = vm.push(&object.Integer{Value: left.Value - right.Value})
 
 	case code.OpMul:
-		err = vm.push(&object.Integer{Value: leftValue * rightValue})
+		err = vm.push(&object.Integer{Value: left.Value * right.Value})
 
 	case code.OpDiv:
-		err = vm.push(&object.Integer{Value: leftValue / rightValue})
+		err = vm.push(&object.Integer{Value: left.Value / right.Value})
 	default:
 		return fmt.Errorf("unknown integer operator: %d", op)
 	}
