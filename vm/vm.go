@@ -143,6 +143,18 @@ func (vm *Vm) Run() error {
 			if err != nil {
 				return err
 			}
+
+			// initialising array
+		case code.OpArray:
+			numElem := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+
+			array := vm.buildArray(vm.sp-numElem, vm.sp)
+			vm.sp = vm.sp - numElem
+
+			if err := vm.push(array); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -312,4 +324,14 @@ func (vm *Vm) execBoolNegation() error {
 		return fmt.Errorf("illegal operator ! for type: %s", right.Type())
 	}
 	return nil
+}
+
+func (vm *Vm) buildArray(start int, end int) object.Object {
+	elem := make([]object.Object, end-start)
+
+	for i := start; i < end; i++ {
+		elem[i-start] = vm.stack[i]
+	}
+
+	return &object.Array{Elements: elem}
 }
