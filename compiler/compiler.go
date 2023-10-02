@@ -5,6 +5,7 @@ import (
 	"crabscript.rs/code"
 	"crabscript.rs/object"
 	"fmt"
+	"sort"
 )
 
 type Compiler struct {
@@ -203,6 +204,26 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 		c.emit(code.OpArray, len(node.Elements))
+
+	case *ast.DictLiteral:
+		keys := []ast.Expression{}
+		for k := range node.Pairs {
+			keys = append(keys, k)
+		}
+		// sorting for testability
+		sort.Slice(keys, func(i, j int) bool {
+			return keys[i].String() < keys[j].String()
+		})
+		// get final values for the key and value
+		for _, k := range keys {
+			if err := c.Compile(k); err != nil {
+				return err
+			}
+			if err := c.Compile(node.Pairs[k]); err != nil {
+				return err
+			}
+		}
+		c.emit(code.OpDict, len(node.Pairs)*2)
 	}
 
 	return nil

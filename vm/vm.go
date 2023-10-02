@@ -155,6 +155,24 @@ func (vm *Vm) Run() error {
 			if err := vm.push(array); err != nil {
 				return err
 			}
+
+		case code.OpDict:
+			// get operand
+			numElem := int(code.ReadUint16(vm.instructions[ip+1:]))
+			ip += 2
+
+			dict, err := vm.buildDict(vm.sp-numElem, vm.sp)
+			if err != nil {
+				return err
+			}
+
+			// reduce stack pointer now elems are popped onto hash
+			vm.sp = vm.sp - numElem
+
+			if err := vm.push(dict); err != nil {
+				return err
+			}
+
 		}
 	}
 
@@ -334,4 +352,25 @@ func (vm *Vm) buildArray(start int, end int) object.Object {
 	}
 
 	return &object.Array{Elements: elem}
+}
+
+// returns Dict, or error if the key is not hashable
+func (vm *Vm) buildDict(startIndex int, endIndex int) (object.Object, error) {
+	dictPairs := make(map[object.DictKey]object.DictPair)
+
+	// key + val
+	for i := startIndex; i < endIndex; i += 2 {
+		key := vm.stack[i]
+		val := vm.stack[i+1]
+
+		pair := object.DictPair{Key: key, Value: val}
+
+		dictKey, ok := key.(object.Hashable)
+		if !ok {
+			return nil, fmt.Errorf("unhashable key %s", key.Type())
+		}
+		dictPairs[dictKey.DictKey()] = pair
+	}
+
+	return &object.Dict{Pairs: dictPairs}, nil
 }

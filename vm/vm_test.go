@@ -1,13 +1,14 @@
 package vm
 
 import (
+	"fmt"
+	"testing"
+
 	"crabscript.rs/ast"
 	"crabscript.rs/compiler"
 	"crabscript.rs/lexer"
 	"crabscript.rs/object"
 	"crabscript.rs/parser"
-	"fmt"
-	"testing"
 )
 
 type vmTestCase struct {
@@ -110,6 +111,29 @@ func TestArrayLiterals(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestDictLiterals(t *testing.T) {
+	tests := []vmTestCase{
+		//{
+		//	"{}", map[object.DictKey]int64{},
+		//},
+		//{
+		//	"{1: 2, 2: 3}", map[object.DictKey]int64{
+		//		(&object.Integer{Value: 1}).DictKey(): 2,
+		//		(&object.Integer{Value: 2}).DictKey(): 3,
+		//	},
+		//},
+		{
+			"{1 + 1: 2 * 2, 3 + 3: 4 * 4}",
+			map[object.DictKey]int64{
+				(&object.Integer{Value: 2}).DictKey(): 4,
+				(&object.Integer{Value: 6}).DictKey(): 16,
+			},
+		},
+	}
+
+	runVmTests(t, tests)
+}
+
 func runVmTests(t *testing.T, tests []vmTestCase) {
 	t.Helper()
 
@@ -172,6 +196,28 @@ func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {
 		for i, e := range expected {
 			if err := testIntegerObject(int64(e), arr.Elements[i]); err != nil {
 				t.Errorf("mismatching element (%v) at position %d, want %v", arr.Elements[i].(*object.Integer).Value, i, e)
+			}
+		}
+	case map[object.DictKey]int64:
+		hash, ok := actual.(*object.Dict)
+		if !ok {
+			t.Errorf("object is not a dict, got %T (%+v)", actual, actual)
+			return
+		}
+
+		if len(hash.Pairs) != len(expected) {
+			t.Errorf("dict has wrong number of elements, got %d want %d", len(hash.Pairs), len(expected))
+			return
+		}
+
+		for eKey, eVal := range expected {
+			pair, ok := hash.Pairs[eKey]
+			if !ok {
+				t.Errorf("key %v does not exist in dict", eKey)
+			}
+
+			if err := testIntegerObject(eVal, pair.Value); err != nil {
+				t.Errorf("value got same, got %v want %v", pair.Value, eVal)
 			}
 		}
 	}
