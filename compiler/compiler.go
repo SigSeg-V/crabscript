@@ -1,11 +1,12 @@
 package compiler
 
 import (
+	"fmt"
+	"sort"
+
 	"crabscript.rs/ast"
 	"crabscript.rs/code"
 	"crabscript.rs/object"
-	"fmt"
-	"sort"
 )
 
 type Compiler struct {
@@ -224,6 +225,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 			}
 		}
 		c.emit(code.OpDict, len(node.Pairs)*2)
+
+	case *ast.IndexExpression:
+		// get expression of subscript and item
+		if err := c.Compile(node.Left); err != nil {
+			return err
+		}
+		if err := c.Compile(node.Index); err != nil {
+			return err
+		}
+		c.emit(code.OpIdx)
 	}
 
 	return nil

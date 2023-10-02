@@ -34,6 +34,7 @@ const (
 	OpSetGbl                 // setting bound variables from stack
 	OpArray                  // list collection type
 	OpDict                   // dictionary type
+	OpIdx                    // index or subscript operator
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -63,6 +64,7 @@ var definitions = map[Opcode]*Definition{
 	OpSetGbl:   {"OpSetGbl", []int{2}},   // setting bound variables from the stack
 	OpArray:    {"OpArray", []int{2}},    // list collection type
 	OpDict:     {"OpDict", []int{2}},     // dictionary type
+	OpIdx:      {"OpIdx", []int{}},       // index or subscript operator
 }
 
 // Lookup returns relevant debugging info for op if available

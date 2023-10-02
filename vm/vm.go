@@ -173,6 +173,13 @@ func (vm *Vm) Run() error {
 				return err
 			}
 
+		case code.OpIdx:
+			index := vm.pop()
+			left := vm.pop()
+			if err := vm.execIdxExpression(left, index); err != nil {
+				return err
+			}
+
 		}
 	}
 
@@ -342,6 +349,46 @@ func (vm *Vm) execBoolNegation() error {
 		return fmt.Errorf("illegal operator ! for type: %s", right.Type())
 	}
 	return nil
+}
+
+func (vm *Vm) execIdxExpression(left object.Object, idx object.Object) error {
+	switch {
+	case left.Type() == object.ArrayObj && idx.Type() == object.IntegerObj:
+		return vm.execArrayIdx(left, idx)
+	case left.Type() == object.DictObj:
+		return vm.execDictIdx(left, idx)
+	default:
+		return fmt.Errorf("index operator unavailable for type %v", left.Type())
+	}
+}
+
+// get element from array index
+func (vm *Vm) execArrayIdx(left object.Object, idx object.Object) error {
+	arrayObj := left.(*object.Array)
+	i := idx.(*object.Integer).Value
+	max := int64(len(arrayObj.Elements) - 1)
+
+	if i < 0 || i > max {
+		return vm.push(Null)
+	}
+
+	return vm.push(arrayObj.Elements[i])
+}
+
+// get element from dictionary index
+func (vm *Vm) execDictIdx(left object.Object, idx object.Object) error {
+	dictObj := left.(*object.Dict)
+	k, ok := idx.(object.Hashable)
+	if !ok {
+		return fmt.Errorf("illegal key: %v", idx)
+	}
+
+	pair, ok := dictObj.Pairs[k.DictKey()]
+	if !ok {
+		return vm.push(Null)
+	}
+
+	return vm.push(pair.Value)
 }
 
 func (vm *Vm) buildArray(start int, end int) object.Object {
