@@ -22,8 +22,8 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "1 + 2",
 			expectedConstants: []interface{}{1, 2},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpAdd),
 				code.Make(code.OpPop),
 			},
@@ -32,9 +32,9 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "1; 2", // 2 distinct expressions
 			expectedConstants: []interface{}{1, 2},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpPop),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpPop),
 			},
 		},
@@ -42,8 +42,8 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "1 - 2",
 			expectedConstants: []interface{}{1, 2},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpSub),
 				code.Make(code.OpPop),
 			},
@@ -52,8 +52,8 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "1 * 2",
 			expectedConstants: []interface{}{1, 2},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpMul),
 				code.Make(code.OpPop),
 			},
@@ -62,8 +62,8 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "2 / 1",
 			expectedConstants: []interface{}{2, 1},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpDiv),
 				code.Make(code.OpPop),
 			},
@@ -72,7 +72,7 @@ func TestIntArithmetic(t *testing.T) {
 			input:             "-1",
 			expectedConstants: []interface{}{1},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpNeg),
 				code.Make(code.OpPop),
 			},
@@ -101,32 +101,32 @@ func TestBooleanExpresions(t *testing.T) {
 		},
 		{
 			input: "1 > 2", expectedConstants: []interface{}{1, 2}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpGt),
 				code.Make(code.OpPop),
 			},
 		},
 		{
 			input: "1 < 2", expectedConstants: []interface{}{2, 1}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpGt),
 				code.Make(code.OpPop),
 			},
 		},
 		{
 			input: "1 == 2", expectedConstants: []interface{}{1, 2}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpEq),
 				code.Make(code.OpPop),
 			},
 		},
 		{
 			input: "1 != 2", expectedConstants: []interface{}{1, 2}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpNe),
 				code.Make(code.OpPop),
 			},
@@ -165,12 +165,12 @@ func TestIndexExperssions(t *testing.T) {
 			input:             "[1, 2, 3][1 + 1]",
 			expectedConstants: []interface{}{1, 2, 3, 1, 1},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
-				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpConst, 2),
 				code.Make(code.OpArray, 3),
-				code.Make(code.OpConstant, 3),
-				code.Make(code.OpConstant, 4),
+				code.Make(code.OpConst, 3),
+				code.Make(code.OpConst, 4),
 				code.Make(code.OpAdd),
 				code.Make(code.OpIdx),
 				code.Make(code.OpPop),
@@ -180,11 +180,11 @@ func TestIndexExperssions(t *testing.T) {
 			input:             "{1: 2}[2 - 1]",
 			expectedConstants: []interface{}{1, 2, 2, 1},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpDict, 2),
-				code.Make(code.OpConstant, 2),
-				code.Make(code.OpConstant, 3),
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpConst, 3),
 				code.Make(code.OpSub),
 				code.Make(code.OpIdx),
 				code.Make(code.OpPop),
@@ -292,15 +292,15 @@ func TestConditionals(t *testing.T) {
 				// 1
 				code.Make(code.OpJmpNt, 10),
 				// 4
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				// 7
 				code.Make(code.OpJmp, 13),
 				// 10
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 1),
 				// 13
 				code.Make(code.OpPop),
 				// 14
-				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConst, 2),
 				// 17
 				code.Make(code.OpPop),
 			},
@@ -315,7 +315,7 @@ if (true) { 10 }; 3333;
 				// 0001
 				code.Make(code.OpJmpNt, 10),
 				// 0004
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				// 0007
 				code.Make(code.OpJmp, 11),
 				// 0010
@@ -323,7 +323,7 @@ if (true) { 10 }; 3333;
 				// 0011
 				code.Make(code.OpPop),
 				// 0012
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 1),
 				// 0015
 				code.Make(code.OpPop),
 			},
@@ -340,9 +340,9 @@ let one = 1;
 let two = 2;
 `,
 			expectedConstants: []interface{}{1, 2}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpSetGbl, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpSetGbl, 1),
 			}},
 		{
@@ -351,7 +351,7 @@ let one = 1;
 one;
 `,
 			expectedConstants: []interface{}{1}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpSetGbl, 0),
 				code.Make(code.OpGetGbl, 0),
 				code.Make(code.OpPop),
@@ -364,7 +364,7 @@ let two = one;
 two;
 `,
 			expectedConstants: []interface{}{1}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpSetGbl, 0),
 				code.Make(code.OpGetGbl, 0),
 				code.Make(code.OpSetGbl, 1),
@@ -380,14 +380,14 @@ func TestStringExpressions(t *testing.T) {
 	tests := []compilerTestCase{
 		{
 			input: `"monkey"`, expectedConstants: []interface{}{"monkey"}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
+				code.Make(code.OpConst, 0),
 				code.Make(code.OpPop),
 			},
 		},
 		{
 			input: `"mon" + "key"`, expectedConstants: []interface{}{"mon", "key"}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpAdd),
 				code.Make(code.OpPop),
 			},
@@ -406,23 +406,23 @@ func TestArrayLiterals(t *testing.T) {
 		},
 		{
 			input: "[1, 2, 3]", expectedConstants: []interface{}{1, 2, 3}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
-				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpConst, 2),
 				code.Make(code.OpArray, 3),
 				code.Make(code.OpPop),
 			},
 		},
 		{
 			input: "[1 + 2, 3 - 4, 5 * 6]", expectedConstants: []interface{}{1, 2, 3, 4, 5, 6}, expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
 				code.Make(code.OpAdd),
-				code.Make(code.OpConstant, 2),
-				code.Make(code.OpConstant, 3),
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpConst, 3),
 				code.Make(code.OpSub),
-				code.Make(code.OpConstant, 4),
-				code.Make(code.OpConstant, 5),
+				code.Make(code.OpConst, 4),
+				code.Make(code.OpConst, 5),
 				code.Make(code.OpMul),
 				code.Make(code.OpArray, 3),
 				code.Make(code.OpPop),
@@ -446,12 +446,12 @@ func TestDictLiterals(t *testing.T) {
 			input:             "{1: 2, 3: 4, 5: 6}",
 			expectedConstants: []interface{}{1, 2, 3, 4, 5, 6},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
-				code.Make(code.OpConstant, 2),
-				code.Make(code.OpConstant, 3),
-				code.Make(code.OpConstant, 4),
-				code.Make(code.OpConstant, 5),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpConst, 3),
+				code.Make(code.OpConst, 4),
+				code.Make(code.OpConst, 5),
 				code.Make(code.OpDict, 6),
 				code.Make(code.OpPop),
 			},
@@ -460,13 +460,13 @@ func TestDictLiterals(t *testing.T) {
 			input:             "{1: 2 + 3, 4: 5 * 6}",
 			expectedConstants: []interface{}{1, 2, 3, 4, 5, 6},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConstant, 0),
-				code.Make(code.OpConstant, 1),
-				code.Make(code.OpConstant, 2),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpConst, 2),
 				code.Make(code.OpAdd),
-				code.Make(code.OpConstant, 3),
-				code.Make(code.OpConstant, 4),
-				code.Make(code.OpConstant, 5),
+				code.Make(code.OpConst, 3),
+				code.Make(code.OpConst, 4),
+				code.Make(code.OpConst, 5),
 				code.Make(code.OpMul),
 				code.Make(code.OpDict, 4),
 				code.Make(code.OpPop),

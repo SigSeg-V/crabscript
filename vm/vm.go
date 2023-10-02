@@ -64,7 +64,7 @@ func (vm *Vm) Run() error {
 
 		// decoding operations
 		switch op {
-		case code.OpConstant:
+		case code.OpConst:
 			constIdx := code.ReadUint16(vm.instructions[ip+1:])
 			ip += 2
 			// putting new const onto stack

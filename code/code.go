@@ -14,27 +14,29 @@ type Opcode byte
 
 // Enum of opcodes in use
 const (
-	OpConstant Opcode = iota // max of 65536 constants in constant pa
-	OpAdd                    // add the topmost 2 elem of stack
-	OpSub                    // add the topmost 2 elem of stack
-	OpMul                    // add the topmost 2 elem of stack
-	OpDiv                    // add the topmost 2 elem of stack
-	OpPop                    // cleans the stack after an expression
-	OpTrue                   // represents `true` literal
-	OpFalse                  // represents `false` literal
-	OpEq                     // equals comparator
-	OpNe                     // not equals comparator
-	OpGt                     // greater than comparator
-	OpNeg                    // negation operator
-	OpBang                   // `not` operator
-	OpJmp                    // jump operator, for conditionals and
-	OpJmpNt                  // jump when not true, for conditionals
-	OpNull                   // *NULL*
-	OpGetGbl                 // getting bound variables from stack
-	OpSetGbl                 // setting bound variables from stack
-	OpArray                  // list collection type
-	OpDict                   // dictionary type
-	OpIdx                    // index or subscript operator
+	OpConst  Opcode = iota // max of 65536 constants in constant pa
+	OpAdd                  // add the topmost 2 elem of stack
+	OpSub                  // add the topmost 2 elem of stack
+	OpMul                  // add the topmost 2 elem of stack
+	OpDiv                  // add the topmost 2 elem of stack
+	OpPop                  // cleans the stack after an expression
+	OpTrue                 // represents `true` literal
+	OpFalse                // represents `false` literal
+	OpEq                   // equals comparator
+	OpNe                   // not equals comparator
+	OpGt                   // greater than comparator
+	OpNeg                  // negation operator
+	OpBang                 // `not` operator
+	OpJmp                  // jump operator, for conditionals and
+	OpJmpNt                // jump when not true, for conditionals
+	OpNull                 // *NULL*
+	OpGetGbl               // getting bound variables from stack
+	OpSetGbl               // setting bound variables from stack
+	OpArray                // list collection type
+	OpDict                 // dictionary type
+	OpIdx                  // index or subscript operator
+	OpCall                 // call fn
+	OpRet                  //return value
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -44,27 +46,29 @@ type Definition struct {
 }
 
 var definitions = map[Opcode]*Definition{
-	OpConstant: {"OpConstant", []int{2}}, // max of 65536 constants in constant pool
-	OpAdd:      {"OpAdd", []int{}},       // add the topmost 2 elem of stack
-	OpSub:      {"OpSub", []int{}},       // add the topmost 2 elem of stack
-	OpMul:      {"OpMul", []int{}},       // add the topmost 2 elem of stack
-	OpDiv:      {"OpDiv", []int{}},       // add the topmost 2 elem of stack
-	OpPop:      {"OpPop", []int{}},       // cleans the stack after an expression is evaluated
-	OpTrue:     {"OpTrue", []int{}},      // represents `true` literal
-	OpFalse:    {"OpFalse", []int{}},     // represents `false` literal
-	OpEq:       {"OpEq", []int{}},        // equals comparator
-	OpNe:       {"OpNe", []int{}},        // not equals comparator
-	OpGt:       {"OpGt", []int{}},        // greater than comparator
-	OpNeg:      {"OpNeg", []int{}},       // negation operator
-	OpBang:     {"OpBang", []int{}},      // `not` operator
-	OpJmp:      {"OpJmp", []int{2}},      // jump operator, for conditionals and functions
-	OpJmpNt:    {"OpJmpNt", []int{2}},    // jump when not true, for conditionals
-	OpNull:     {"OpNull", []int{}},      // *NULL*
-	OpGetGbl:   {"OpGetGbl", []int{2}},   // getting bound variables from the stack
-	OpSetGbl:   {"OpSetGbl", []int{2}},   // setting bound variables from the stack
-	OpArray:    {"OpArray", []int{2}},    // list collection type
-	OpDict:     {"OpDict", []int{2}},     // dictionary type
-	OpIdx:      {"OpIdx", []int{}},       // index or subscript operator
+	OpConst:  {"OpConst", []int{2}},  // max of 65536 constants in constant pool
+	OpAdd:    {"OpAdd", []int{}},     // add the topmost 2 elem of stack
+	OpSub:    {"OpSub", []int{}},     // add the topmost 2 elem of stack
+	OpMul:    {"OpMul", []int{}},     // add the topmost 2 elem of stack
+	OpDiv:    {"OpDiv", []int{}},     // add the topmost 2 elem of stack
+	OpPop:    {"OpPop", []int{}},     // cleans the stack after an expression is evaluated
+	OpTrue:   {"OpTrue", []int{}},    // represents `true` literal
+	OpFalse:  {"OpFalse", []int{}},   // represents `false` literal
+	OpEq:     {"OpEq", []int{}},      // equals comparator
+	OpNe:     {"OpNe", []int{}},      // not equals comparator
+	OpGt:     {"OpGt", []int{}},      // greater than comparator
+	OpNeg:    {"OpNeg", []int{}},     // negation operator
+	OpBang:   {"OpBang", []int{}},    // `not` operator
+	OpJmp:    {"OpJmp", []int{2}},    // jump operator, for conditionals and functions
+	OpJmpNt:  {"OpJmpNt", []int{2}},  // jump when not true, for conditionals
+	OpNull:   {"OpNull", []int{}},    // *NULL*
+	OpGetGbl: {"OpGetGbl", []int{2}}, // getting bound variables from the stack
+	OpSetGbl: {"OpSetGbl", []int{2}}, // setting bound variables from the stack
+	OpArray:  {"OpArray", []int{2}},  // list collection type
+	OpDict:   {"OpDict", []int{2}},   // dictionary type
+	OpIdx:    {"OpIdx", []int{}},     // index or subscript operator
+	OpCall:   {"OpCall", []int{}},    // call fn
+	OpRet:    {"OpRet", []int{}},     // return value
 }
 
 // Lookup returns relevant debugging info for op if available

@@ -18,4 +18,5 @@ const (
 	BuiltinObj  = "Builtin"
 	ArrayObj    = "Array"
 	DictObj     = "Dict"
+	CompFnObj   = "CompFnObj"
 )
