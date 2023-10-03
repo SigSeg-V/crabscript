@@ -36,7 +36,8 @@ const (
 	OpDict                 // dictionary type
 	OpIdx                  // index or subscript operator
 	OpCall                 // call fn
-	OpRet                  //return value
+	OpRet                  // return to branch point
+	OpRetVal               // return value to top of stack
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -68,7 +69,8 @@ var definitions = map[Opcode]*Definition{
 	OpDict:   {"OpDict", []int{2}},   // dictionary type
 	OpIdx:    {"OpIdx", []int{}},     // index or subscript operator
 	OpCall:   {"OpCall", []int{}},    // call fn
-	OpRet:    {"OpRet", []int{}},     // return value
+	OpRet:    {"OpRet", []int{}},     // return to branch point
+	OpRetVal: {"OpRetVal", []int{}},  // push value to top of stack
 }
 
 // Lookup returns relevant debugging info for op if available
