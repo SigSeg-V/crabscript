@@ -154,7 +154,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		// remove extra pop so that if blocks can be used for assignment
-		if c.lastInstructionIsPop() {
+		if c.lastInstructionIs(code.OpPop) {
 			c.removeLastPop()
 		}
 		// yet another number fresh from my ass
@@ -171,7 +171,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 			if err != nil {
 				return err
 			}
-			if c.lastInstructionIsPop() {
+			if c.lastInstructionIs(code.OpPop) {
 				c.removeLastPop()
 			}
 		}
@@ -254,6 +254,16 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 
+		// returning value instead of pop if needed
+		if c.lastInstructionIs(code.OpPop) {
+			c.replaceLastPopWithRet()
+		}
+
+		// void return if there is no value to return
+		if !c.lastInstructionIs(code.OpRetVal) {
+			c.emit(code.OpRet)
+		}
+
 		// return instructions once e finish compiling to put onto the const heap
 		instructions := c.leaveScope()
 
@@ -312,8 +322,11 @@ func (c *Compiler) setLastInstruction(op code.Opcode, pos int) {
 	}
 }
 
-func (c *Compiler) lastInstructionIsPop() bool {
-	return c.scopes[c.scopeIndex].lastInstruction.Opcode == code.OpPop
+func (c *Compiler) lastInstructionIs(op code.Opcode) bool {
+	if len(c.currentInstructions()) == 0 {
+		return false
+	}
+	return c.scopes[c.scopeIndex].lastInstruction.Opcode == op
 }
 
 func (c *Compiler) removeLastPop() {
@@ -362,4 +375,12 @@ func (c *Compiler) leaveScope() code.Instructions {
 	c.scopeIndex--
 
 	return inst
+}
+
+// adds return values code in place of pop
+func (c *Compiler) replaceLastPopWithRet() {
+	lastPos := c.scopes[c.scopeIndex].lastInstruction.Position
+	c.replaceInstruction(lastPos, code.Make(code.OpRetVal))
+
+	c.scopes[c.scopeIndex].lastInstruction.Opcode = code.OpRetVal
 }

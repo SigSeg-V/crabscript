@@ -563,6 +563,35 @@ func TestFns(t *testing.T) {
 				code.Make(code.OpPop),
 			},
 		},
+		{
+			input: `fn(){ 1; 2 }`, // testing imp return with multiple statements
+			expectedConstants: []interface{}{1, 2,
+				[]code.Instructions{
+					code.Make(code.OpConst, 0),
+					code.Make(code.OpPop),
+					code.Make(code.OpConst, 1),
+					code.Make(code.OpRetVal),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
+func TestFnsNoRetVal(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input:             `fn(){}`,
+			expectedConstants: []interface{}{[]code.Instructions{code.Make(code.OpRet)}},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpPop),
+			},
+		},
 	}
 	runCompilerTests(t, tests)
 }
