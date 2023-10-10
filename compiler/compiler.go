@@ -188,8 +188,8 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 		// binding a variable
 	case *ast.LetStatement:
-		err := c.Compile(node.Value)
-		if err != nil {
+
+		if err := c.Compile(node.Value); err != nil {
 			return err
 		}
 		symbol := c.symbolTable.Define(node.Name.Value)
@@ -276,6 +276,13 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		c.emit(code.OpRetVal)
+
+		// running a compiled fn in the const pool
+	case *ast.CallExpression:
+		if err := c.Compile(node.Function); err != nil {
+			return err
+		}
+		c.emit(code.OpCall)
 	}
 
 	return nil
