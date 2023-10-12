@@ -210,6 +210,35 @@ func (vm *Vm) Run() error {
 				return err
 			}
 
+		case code.OpCall:
+			fn, ok := vm.stack[vm.sp-1].(*object.CompFn)
+			if !ok {
+				return fmt.Errorf("not a function")
+			}
+			frame := NewFrame(fn)
+			vm.pushFrame(frame)
+
+		case code.OpRetVal:
+			// retrieve val from fn
+			retVal := vm.pop()
+
+			// remove frame from stack
+			vm.popFrame()
+			vm.pop()
+
+			if err := vm.push(retVal); err != nil {
+				return err
+			}
+
+		case code.OpRet:
+			// remove frame from stack
+			vm.popFrame()
+			vm.pop()
+
+			if err := vm.push(Null); err != nil {
+				return err
+			}
+
 		}
 	}
 
