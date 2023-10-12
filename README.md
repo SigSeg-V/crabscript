@@ -30,3 +30,5 @@ which is modular and easily extensible.
 The evaluator is an implementation of a tree-walking interpreter and no 
 byte-code is generated. There are no primitive types - everything is an object 
 a la Ruby.
+
+The compiler is less complete than the interpreter - it doesn't fully support fns.
