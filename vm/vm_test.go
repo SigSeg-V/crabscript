@@ -250,6 +250,20 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 	}
 }
 
+func TestAnonymousFns(t *testing.T) {
+  tests := []vmTestCase{
+    {
+      input: `
+let returnsOne = fn() { 1; };
+let uselessFactory = fn() { returnsOne; };
+uselessFactory()();
+    `,
+      expected: 1,
+    },
+  }
+    runVmTests(t, tests)
+}
+
 func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {
 	t.Helper()
 
