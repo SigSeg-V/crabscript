@@ -8,6 +8,7 @@ import (
 )
 
 const StackSize = 2048
+const MaxFrames = 2048
 const GlobalSize = 65536 // maximum number of global variables allowed
 
 var True = &object.Boolean{Value: true}
@@ -23,21 +24,42 @@ func boolToObject(input bool) *object.Boolean {
 }
 
 type Vm struct {
-	constants    []object.Object
-	instructions code.Instructions
-	stack        []object.Object
-	globals      []object.Object
-	sp           int // stack pointer, always at next free slot at top of stack
+	constants  []object.Object
+	stack      []object.Object
+	globals    []object.Object
+	sp         int      // stack pointer, always at next free slot at top of stack
+	frames     []*Frame // stack of frames created
+	frameIndex int      // current index into frames
 
 }
 
+type Frame struct {
+	fn *object.CompFn // function to exec
+	ip int            // instruction pointer for the frame
+}
+
+func NewFrame(fn *object.CompFn) *Frame {
+	return &Frame{fn: fn, ip: -1}
+}
+
+func (f *Frame) Instructions() code.Instructions {
+	return f.fn.Instructions
+}
+
 func New(bytecode *compiler.Bytecode) *Vm {
+	mainFn := &object.CompFn{Instructions: bytecode.Instructions}
+	mainFrame := NewFrame(mainFn) // bring the top level into a frame
+
+	frames := make([]*Frame, MaxFrames) // preallocating the frame buffer for speeeeeeeeed
+	frames[0] = mainFrame
+
 	return &Vm{
-		instructions: bytecode.Instructions,
-		constants:    bytecode.Constants,
-		stack:        make([]object.Object, StackSize),
-		globals:      make([]object.Object, GlobalSize),
-		sp:           0,
+		constants:  bytecode.Constants,
+		stack:      make([]object.Object, StackSize),
+		globals:    make([]object.Object, GlobalSize),
+		sp:         0,
+		frames:     frames,
+		frameIndex: 1,
 	}
 }
 
@@ -59,14 +81,22 @@ func (vm *Vm) StackTop() object.Object {
 
 // executes bytecode loaded
 func (vm *Vm) Run() error {
-	for ip := 0; ip < len(vm.instructions); ip++ {
-		op := code.Opcode(vm.instructions[ip])
+	var ip int
+	var ins code.Instructions
+	var op code.Opcode
+	for vm.currentFrame().ip < len(vm.currentFrame().Instructions())-1 {
+		vm.currentFrame().ip++
+
+		ip = vm.currentFrame().ip
+		ins = vm.currentFrame().Instructions()
+
+		op = code.Opcode(ins[ip])
 
 		// decoding operations
 		switch op {
 		case code.OpConst:
-			constIdx := code.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			constIdx := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
 			// putting new const onto stack
 			err := vm.push(vm.constants[constIdx])
 			if err != nil {
@@ -109,16 +139,16 @@ func (vm *Vm) Run() error {
 			vm.pop()
 
 		case code.OpJmp:
-			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip = pos - 1
+			pos := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip = pos - 1
 
 		case code.OpJmpNt:
-			pos := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2 // move to the condition (past 2 bytes of constants)
+			pos := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip += 2 // move to the condition (past 2 bytes of constants)
 			condition := vm.pop()
 			// evaluate the condition and jmp if needed
 			if !isTruthy(condition) {
-				ip = pos - 1
+				vm.currentFrame().ip = pos - 1
 			}
 
 		case code.OpNull:
@@ -128,16 +158,16 @@ func (vm *Vm) Run() error {
 			}
 
 		case code.OpSetGbl:
-			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			globalIndex := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
 
 			// add var to global heap
 			vm.globals[globalIndex] = vm.pop()
 
 			// putting the binding to the top of stack
 		case code.OpGetGbl:
-			globalIndex := code.ReadUint16(vm.instructions[ip+1:])
-			ip += 2
+			globalIndex := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
 
 			err := vm.push(vm.globals[globalIndex])
 			if err != nil {
@@ -146,8 +176,8 @@ func (vm *Vm) Run() error {
 
 			// initialising array
 		case code.OpArray:
-			numElem := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			numElem := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip += 2
 
 			array := vm.buildArray(vm.sp-numElem, vm.sp)
 			vm.sp = vm.sp - numElem
@@ -158,8 +188,8 @@ func (vm *Vm) Run() error {
 
 		case code.OpDict:
 			// get operand
-			numElem := int(code.ReadUint16(vm.instructions[ip+1:]))
-			ip += 2
+			numElem := int(code.ReadUint16(ins[ip+1:]))
+			vm.currentFrame().ip += 2
 
 			dict, err := vm.buildDict(vm.sp-numElem, vm.sp)
 			if err != nil {
@@ -420,4 +450,21 @@ func (vm *Vm) buildDict(startIndex int, endIndex int) (object.Object, error) {
 	}
 
 	return &object.Dict{Pairs: dictPairs}, nil
+}
+
+// return the executing frame
+func (vm *Vm) currentFrame() *Frame {
+	return vm.frames[vm.frameIndex-1]
+}
+
+// add frame to the stack
+func (vm *Vm) pushFrame(f *Frame) {
+	vm.frames[vm.frameIndex] = f
+	vm.frameIndex++
+}
+
+// decrement the frame index and return last on stack
+func (vm *Vm) popFrame() *Frame {
+	vm.frameIndex--
+	return vm.frames[vm.frameIndex]
 }
