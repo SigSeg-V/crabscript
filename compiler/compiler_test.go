@@ -1,13 +1,14 @@
 package compiler
 
 import (
+	"fmt"
+	"testing"
+
 	"crabscript.rs/ast"
 	"crabscript.rs/code"
 	"crabscript.rs/lexer"
 	"crabscript.rs/object"
 	"crabscript.rs/parser"
-	"fmt"
-	"testing"
 )
 
 type compilerTestCase struct {
@@ -195,6 +196,78 @@ func TestIndexExperssions(t *testing.T) {
 	runCompilerTests(t, tests)
 }
 
+func TestLetStatementScope(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+  let num = 69;
+  fn() { num };
+  `,
+			expectedConstants: []interface{}{69,
+				[]code.Instructions{
+					code.Make(code.OpGetGbl, 0),
+					code.Make(code.OpRetVal),
+				},
+			},
+
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+      fn() {
+        let num = 69;
+        num
+      };
+      `,
+			expectedConstants: []interface{}{69,
+				[]code.Instructions{
+					code.Make(code.OpConst, 0),
+					code.Make(code.OpSetLcl, 0),
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpRetVal),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+        fn() {
+          let a = 55;
+          let b = 77;
+          a + b
+        };
+        `,
+			expectedConstants: []interface{}{
+				55,
+				77,
+				[]code.Instructions{
+					code.Make(code.OpConst, 0),
+					code.Make(code.OpSetLcl, 0),
+					code.Make(code.OpConst, 1),
+					code.Make(code.OpSetLcl, 1),
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpGetLcl, 1),
+					code.Make(code.OpAdd),
+					code.Make(code.OpRetVal),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
 func runCompilerTests(t *testing.T, tests []compilerTestCase) {
 	t.Helper()
 	for _, tt := range tests {
@@ -257,6 +330,7 @@ func TestCompilerScopes(t *testing.T) {
 	if compiler.scopeIndex != 0 {
 		t.Errorf("scopeIndex incorrect, got %d want %d", compiler.scopeIndex, 0)
 	}
+	globalSymbolTable := compiler.symbolTable
 
 	compiler.emit(code.OpMul)
 
@@ -276,9 +350,19 @@ func TestCompilerScopes(t *testing.T) {
 		t.Errorf("lastinstruction wrong, got %d want %d", last.Opcode, code.OpSub)
 	}
 
+	// make sure we enclose scope correctly
+	if compiler.symbolTable.Outer != globalSymbolTable {
+		t.Errorf("compiler did not enclose scope")
+	}
+
 	compiler.leaveScope()
 	if compiler.scopeIndex != 0 {
 		t.Errorf("scopeIndex incorrect, got %d want %d", compiler.scopeIndex, 0)
+	}
+
+	// make sure we enclose scope correctly
+	if compiler.symbolTable != globalSymbolTable {
+		t.Errorf("compiler did not leave scope")
 	}
 
 	compiler.emit(code.OpAdd)

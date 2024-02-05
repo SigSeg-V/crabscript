@@ -193,7 +193,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 			return err
 		}
 		symbol := c.symbolTable.Define(node.Name.Value)
-		c.emit(code.OpSetGbl, symbol.Index)
+		if symbol.Scope == LocalScope {
+			c.emit(code.OpSetLcl, symbol.Index)
+		} else {
+			c.emit(code.OpSetGbl, symbol.Index)
+		}
 
 		// retrieving a bound variable from the store
 	case *ast.Identifier:
@@ -201,7 +205,11 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if !ok {
 			return fmt.Errorf("unresolved symbol: %v", node.Value)
 		}
-		c.emit(code.OpGetGbl, symbol.Index)
+		if symbol.Scope == LocalScope {
+			c.emit(code.OpGetLcl, symbol.Index)
+		} else {
+			c.emit(code.OpGetGbl, symbol.Index)
+		}
 
 	case *ast.StringLiteral:
 		str := &object.String{Value: node.Value}
@@ -373,6 +381,9 @@ func (c *Compiler) enterScope() {
 
 	c.scopes = append(c.scopes, scope)
 	c.scopeIndex++
+
+	// add new symbol table
+	c.symbolTable = NewEnclosedSymbolTable(c.symbolTable)
 }
 
 func (c *Compiler) leaveScope() code.Instructions {
@@ -380,6 +391,9 @@ func (c *Compiler) leaveScope() code.Instructions {
 
 	c.scopes = c.scopes[:len(c.scopes)-1]
 	c.scopeIndex--
+
+	// remove lsat symbolTable
+	c.symbolTable = c.symbolTable.Outer
 
 	return inst
 }

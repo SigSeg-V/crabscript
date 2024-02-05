@@ -38,6 +38,8 @@ const (
 	OpCall                 // call fn
 	OpRet                  // return to branch point
 	OpRetVal               // return value to top of stack
+	OpGetLcl               // getting bound varables from the fn stack frame
+	OpSetLcl               // setting bound variables from the fn stack frame
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -71,6 +73,9 @@ var definitions = map[Opcode]*Definition{
 	OpCall:   {"OpCall", []int{}},    // call fn
 	OpRet:    {"OpRet", []int{}},     // return to branch point
 	OpRetVal: {"OpRetVal", []int{}},  // push value to top of stack
+	OpGetLcl: {"OpGetLcl", []int{2}}, // getting bound varables from the fn stack frame
+	OpSetLcl: {"OpSetLcl", []int{2}}, // setting bound variables from the fn stack frame
+
 }
 
 // Lookup returns relevant debugging info for op if available
@@ -127,6 +132,8 @@ func ReadOperands(def *Definition, in Instructions) ([]int, int) {
 		switch width {
 		case 2:
 			operands[i] = int(ReadUint16(in[offset:]))
+		case 1:
+			operands[i] = int(ReadUint8(in[offset:]))
 		}
 		offset += width
 	}
@@ -135,4 +142,8 @@ func ReadOperands(def *Definition, in Instructions) ([]int, int) {
 
 func ReadUint16(instructions Instructions) uint16 {
 	return binary.BigEndian.Uint16(instructions)
+}
+
+func ReadUint8(instructions Instructions) uint8 {
+	return uint8(instructions[0])
 }
