@@ -692,7 +692,7 @@ func TestFnCalls(t *testing.T) {
 			},
 			expectedInstructions: []code.Instructions{
 				code.Make(code.OpConst, 1), // The compiled function code.Make(code.OpCall),
-				code.Make(code.OpCall),
+				code.Make(code.OpCall, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -712,7 +712,61 @@ func TestFnCalls(t *testing.T) {
 				code.Make(code.OpConst, 1),  // The compiled function code.Make(code.OpSetGlobal, 0), code.Make(code.OpGetGlobal, 0),
 				code.Make(code.OpSetGbl, 0), // putting fn onto the const pool
 				code.Make(code.OpGetGbl, 0), // getting from the const pool
-				code.Make(code.OpCall),      // calling fn
+				code.Make(code.OpCall, 0),   // calling fn
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+let oneArg = fn(hi) { hi };
+oneArg(69);
+`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpRetVal),
+				},
+				69,
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpGetGbl, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpCall, 1),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+let polyArgs = fn(a,b,c,d) {a; b; c; d };
+polyArgs(1, 2, 3, 4);
+`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpPop),
+					code.Make(code.OpGetLcl, 1),
+					code.Make(code.OpPop),
+					code.Make(code.OpGetLcl, 2),
+					code.Make(code.OpPop),
+					code.Make(code.OpGetLcl, 3),
+					code.Make(code.OpRetVal),
+				},
+				1,
+				2,
+				3,
+				4,
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpSetGbl, 0),
+				code.Make(code.OpGetGbl, 0),
+				code.Make(code.OpConst, 1),
+				code.Make(code.OpConst, 2),
+				code.Make(code.OpConst, 3),
+				code.Make(code.OpConst, 4),
+				code.Make(code.OpCall, 4),
 				code.Make(code.OpPop),
 			},
 		},

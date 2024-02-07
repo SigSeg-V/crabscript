@@ -70,7 +70,7 @@ var definitions = map[Opcode]*Definition{
 	OpArray:  {"OpArray", []int{2}},  // list collection type
 	OpDict:   {"OpDict", []int{2}},   // dictionary type
 	OpIdx:    {"OpIdx", []int{}},     // index or subscript operator
-	OpCall:   {"OpCall", []int{}},    // call fn
+	OpCall:   {"OpCall", []int{1}},   // call fn - holds number of arguments (max 255)
 	OpRet:    {"OpRet", []int{}},     // return to branch point
 	OpRetVal: {"OpRetVal", []int{}},  // push value to top of stack
 	OpGetLcl: {"OpGetLcl", []int{2}}, // getting bound varables from the fn stack frame

@@ -317,6 +317,43 @@ func TestCallFnWithBinding(t *testing.T) {
 	runVmTests(t, tests)
 }
 
+func TestLocalFunctions(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+				let returnsOneFn = fn() {
+					let returnsOne = fn() { 1 };
+					returnsOne
+				}
+				
+				returnsOneFn()();
+			`,
+			expected: 1,
+		},
+	}
+	runVmTests(t, tests)
+}
+
+func TestCallFnWithArgsAndBind(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+let fnA = fn(a) { a };
+fnA(420);
+			`,
+			expected: 420,
+		},
+		{
+			input: `
+let adder = fn(a, b, c) { a + b + c };
+adder(1, 2, 3);
+			`,
+			expected: 6,
+		},
+	}
+	runVmTests(t, tests)
+}
+
 func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {
 	t.Helper()
 

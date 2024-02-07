@@ -212,12 +212,17 @@ func (vm *Vm) Run() error {
 			}
 
 		case code.OpCall:
-			fn, ok := vm.stack[vm.sp-1].(*object.CompFn)
+			numArgs := int(code.ReadUint8(ins[ip+1:]))
+			vm.currentFrame().ip++ // skipping num of args for now
+
+			fn, ok := vm.stack[vm.sp-1-numArgs].(*object.CompFn)
 			if !ok {
 				return fmt.Errorf("not a function")
 			}
-			frame := NewFrame(fn, vm.sp) // set up new frame at stack pointer
+
+			frame := NewFrame(fn, vm.sp-numArgs) // set up new frame at stack pointer
 			vm.pushFrame(frame)
+
 			// allocating space for the fn's local bindings on the stack
 			vm.sp = frame.basePtr + fn.LocalVarCount
 
