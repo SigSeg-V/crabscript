@@ -118,9 +118,9 @@ func TestDictLiterals(t *testing.T) {
 		},
 		{
 			"{1: 2, 2: 3}", map[object.DictKey]int64{
-			(&object.Integer{Value: 1}).DictKey(): 2,
-			(&object.Integer{Value: 2}).DictKey(): 3,
-		},
+				(&object.Integer{Value: 1}).DictKey(): 2,
+				(&object.Integer{Value: 2}).DictKey(): 3,
+			},
 		},
 		{
 			"{1 + 1: 2 * 2, 3 + 3: 4 * 4}",
@@ -251,17 +251,70 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 }
 
 func TestAnonymousFns(t *testing.T) {
-  tests := []vmTestCase{
-    {
-      input: `
+	tests := []vmTestCase{
+		{
+			input: `
 let returnsOne = fn() { 1; };
 let uselessFactory = fn() { returnsOne; };
 uselessFactory()();
     `,
-      expected: 1,
-    },
-  }
-    runVmTests(t, tests)
+			expected: 1,
+		},
+	}
+	runVmTests(t, tests)
+}
+
+func TestCallFnWithBinding(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input: `
+		let one = fn() { let one = 1; one };
+		one();
+		`,
+			expected: 1,
+		},
+		{
+			input: `
+		let oneAndTwo = fn() { let one = 1; let two = 2; one + two };
+		oneAndTwo();
+		`,
+			expected: 3,
+		},
+		{
+			input: `
+		let oneAndTwo = fn() { let one = 1; let two = 2; one + two};
+		let threeAndFour = fn() { let three = 3; let four = 4; three + four};
+		oneAndTwo() + threeAndFour();
+		`,
+			expected: 10,
+		},
+		{
+			input: `
+		let fooOne = fn() { let foo = 5; foo; };
+		let fooTwo = fn() { let foo = 6; foo; };
+		fooOne() + fooTwo();
+		`,
+			expected: 11,
+		},
+		{
+			input: `
+		let globalVar = 69;
+		let subOne = fn() {
+			let num = 1;
+			globalVar - 1
+		}
+		
+		let subTwo = fn() {
+			let num = 2;
+			globalVar - 2
+		}
+		
+		subOne() + subTwo();
+		`,
+			expected: 135,
+		},
+	}
+	runVmTests(t, tests)
 }
 
 func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {

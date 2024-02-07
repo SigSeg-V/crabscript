@@ -272,10 +272,15 @@ func (c *Compiler) Compile(node ast.Node) error {
 			c.emit(code.OpRet)
 		}
 
+		numLocals := c.symbolTable.numDefinitions
+
 		// return instructions once e finish compiling to put onto the const heap
 		instructions := c.leaveScope()
 
-		compiledFn := &object.CompFn{Instructions: instructions}
+		compiledFn := &object.CompFn{
+			Instructions:  instructions,
+			LocalVarCount: numLocals,
+		}
 		c.emit(code.OpConst, c.addConstant(compiledFn))
 
 		// return to branch point with our return value at top of stack

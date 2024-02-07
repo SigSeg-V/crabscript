@@ -34,12 +34,13 @@ type Vm struct {
 }
 
 type Frame struct {
-	fn *object.CompFn // function to exec
-	ip int            // instruction pointer for the frame
+	fn      *object.CompFn // function to exec
+	ip      int            // instruction pointer for the frame
+	basePtr int            // ip at the time of child scope execution for the parent scope
 }
 
-func NewFrame(fn *object.CompFn) *Frame {
-	return &Frame{fn: fn, ip: -1}
+func NewFrame(fn *object.CompFn, basePtr int) *Frame {
+	return &Frame{fn: fn, ip: -1, basePtr: basePtr}
 }
 
 func (f *Frame) Instructions() code.Instructions {
@@ -48,7 +49,7 @@ func (f *Frame) Instructions() code.Instructions {
 
 func New(bytecode *compiler.Bytecode) *Vm {
 	mainFn := &object.CompFn{Instructions: bytecode.Instructions}
-	mainFrame := NewFrame(mainFn) // bring the top level into a frame
+	mainFrame := NewFrame(mainFn, 0) // bring the top level into a frame
 
 	frames := make([]*Frame, MaxFrames) // preallocating the frame buffer for speeeeeeeeed
 	frames[0] = mainFrame
@@ -215,16 +216,17 @@ func (vm *Vm) Run() error {
 			if !ok {
 				return fmt.Errorf("not a function")
 			}
-			frame := NewFrame(fn)
+			frame := NewFrame(fn, vm.sp) // set up new frame at stack pointer
 			vm.pushFrame(frame)
+			// allocating space for the fn's local bindings on the stack
+			vm.sp = frame.basePtr + fn.LocalVarCount
 
 		case code.OpRetVal:
 			// retrieve val from fn
 			retVal := vm.pop()
 
-			// remove frame from stack
-			vm.popFrame()
-			vm.pop()
+			frame := vm.popFrame()
+			vm.sp = frame.basePtr - 1
 
 			if err := vm.push(retVal); err != nil {
 				return err
@@ -232,12 +234,31 @@ func (vm *Vm) Run() error {
 
 		case code.OpRet:
 			// remove frame from stack
-			vm.popFrame()
-			vm.pop()
+			frame := vm.popFrame()
+			vm.sp = frame.basePtr - 1
 
 			if err := vm.push(Null); err != nil {
 				return err
 			}
+
+		case code.OpGetLcl:
+			lclIdx := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
+
+			basePtr := vm.currentFrame().basePtr
+
+			err := vm.push(vm.stack[basePtr+int(lclIdx)])
+			if err != nil {
+				return err
+			}
+
+		case code.OpSetLcl:
+			lclIdx := code.ReadUint16(ins[ip+1:])
+			vm.currentFrame().ip += 2
+
+			basePtr := vm.currentFrame().basePtr
+
+			vm.stack[basePtr+int(lclIdx)] = vm.pop()
 
 		}
 	}
