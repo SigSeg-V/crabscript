@@ -378,6 +378,20 @@ c; };
         `,
 			expected: 10,
 		},
+		{
+			input: `
+        let globalNum = 10;
+        let sum = fn(a, b) {
+            let c = a + b;
+            c + globalNum;
+};
+        let outer = fn() {
+            sum(1, 2) + sum(3, 4) + globalNum;
+};
+        outer() + globalNum;
+        `,
+			expected: 50,
+		},
 	}
 	runVmTests(t, tests)
 }
