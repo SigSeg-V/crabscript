@@ -34,22 +34,23 @@ type Vm struct {
 }
 
 type Frame struct {
-	fn      *object.CompFn // function to exec
-	ip      int            // instruction pointer for the frame
-	basePtr int            // ip at the time of child scope execution for the parent scope
+	fn      *object.Closure // function to exec
+	ip      int             // instruction pointer for the frame
+	basePtr int             // ip at the time of child scope execution for the parent scope
 }
 
-func NewFrame(fn *object.CompFn, basePtr int) *Frame {
+func NewFrame(fn *object.Closure, basePtr int) *Frame {
 	return &Frame{fn: fn, ip: -1, basePtr: basePtr}
 }
 
 func (f *Frame) Instructions() code.Instructions {
-	return f.fn.Instructions
+	return f.fn.Fn.Instructions
 }
 
 func New(bytecode *compiler.Bytecode) *Vm {
 	mainFn := &object.CompFn{Instructions: bytecode.Instructions}
-	mainFrame := NewFrame(mainFn, 0) // bring the top level into a frame
+	mainCsr := &object.Closure{Fn: mainFn}
+	mainFrame := NewFrame(mainCsr, 0) // bring the top level into a frame
 
 	frames := make([]*Frame, MaxFrames) // preallocating the frame buffer for speeeeeeeeed
 	frames[0] = mainFrame
@@ -266,6 +267,24 @@ func (vm *Vm) Run() error {
 				return err
 			}
 
+		case code.OpClosure:
+			idx := int(code.ReadUint16(ins[ip+1:]))
+			numFree := int(code.ReadUint8(ins[ip+3:]))
+			vm.currentFrame().ip += 3
+
+			if err := vm.pushClosure(idx, numFree); err != nil {
+				return err
+			}
+
+		case code.OpGetFree:
+			fIdx := code.ReadUint8(ins[ip+1:])
+			vm.currentFrame().ip += 1
+
+			curCsr := vm.currentFrame().fn
+
+			if err := vm.push(curCsr.Free[fIdx]); err != nil {
+				return err
+			}
 		}
 	}
 
@@ -275,9 +294,8 @@ func (vm *Vm) Run() error {
 func (vm *Vm) execCall(numArgs int) error {
 	fn := vm.stack[vm.sp-1-numArgs]
 	switch fn := fn.(type) {
-	case *object.CompFn:
+	case *object.Closure:
 		return vm.callFn(fn, numArgs)
-
 	case *object.Builtin:
 		return vm.callBIn(fn, numArgs)
 
@@ -287,15 +305,15 @@ func (vm *Vm) execCall(numArgs int) error {
 	}
 }
 
-func (vm *Vm) callFn(fn *object.CompFn, numArgs int) error {
-	if numArgs != fn.ParamCount {
-		return fmt.Errorf("wrong number of arguments: want %d got %d", fn.ParamCount, numArgs)
+func (vm *Vm) callFn(fn *object.Closure, numArgs int) error {
+	if numArgs != fn.Fn.ParamCount {
+		return fmt.Errorf("wrong number of arguments: want %d got %d", fn.Fn.ParamCount, numArgs)
 	}
 	frame := NewFrame(fn, vm.sp-numArgs) // set up new frame at stack pointer
 	vm.pushFrame(frame)
 
 	// allocating space for the fn's local bindings on the stack
-	vm.sp = frame.basePtr + fn.LocalVarCount
+	vm.sp = frame.basePtr + fn.Fn.LocalVarCount
 	return nil
 }
 
@@ -568,4 +586,22 @@ func (vm *Vm) callBIn(fn *object.Builtin, argNum int) error {
 		}
 	}
 	return nil
+}
+
+func (vm *Vm) pushClosure(idx int, numFree int) error {
+	cst := vm.constants[idx]
+	fn, ok := cst.(*object.CompFn)
+
+	if !ok {
+		return fmt.Errorf("not a function: %+v", cst)
+	}
+
+	free := make([]object.Object, numFree)
+	for i := 0; i < numFree; i++ {
+		free[i] = vm.stack[vm.sp-numFree+i]
+	}
+	vm.sp -= numFree
+
+	csr := &object.Closure{Fn: fn, Free: free}
+	return vm.push(csr)
 }

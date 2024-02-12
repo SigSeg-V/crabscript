@@ -194,11 +194,10 @@ func (c *Compiler) Compile(node ast.Node) error {
 
 		// binding a variable
 	case *ast.LetStatement:
-
+		symbol := c.symbolTable.Define(node.Name.Value)
 		if err := c.Compile(node.Value); err != nil {
 			return err
 		}
-		symbol := c.symbolTable.Define(node.Name.Value)
 		if symbol.Scope == LocalScope {
 			c.emit(code.OpSetLcl, symbol.Index)
 		} else {
@@ -279,16 +278,22 @@ func (c *Compiler) Compile(node ast.Node) error {
 		}
 
 		numLocals := c.symbolTable.numDefinitions
+		freeSym := c.symbolTable.FreeSymbols
 
 		// return instructions once e finish compiling to put onto the const heap
 		instructions := c.leaveScope()
+
+		for _, s := range freeSym {
+			c.resolveSymbol(s)
+		}
 
 		compiledFn := &object.CompFn{
 			Instructions:  instructions,
 			LocalVarCount: numLocals,
 			ParamCount:    len(node.Parameters),
 		}
-		c.emit(code.OpConst, c.addConstant(compiledFn))
+		fnIdx := c.addConstant(compiledFn)
+		c.emit(code.OpClosure, fnIdx, len(freeSym))
 
 		// return to branch point with our return value at top of stack
 	case *ast.ReturnStatement:
@@ -432,5 +437,7 @@ func (c *Compiler) resolveSymbol(s Symbol) {
 		c.emit(code.OpGetLcl, s.Index)
 	case BuiltinScope:
 		c.emit(code.OpGetBIn, s.Index)
+	case FreeScope:
+		c.emit(code.OpGetFree, s.Index)
 	}
 }

@@ -23,6 +23,11 @@ func TestMake(t *testing.T) {
 			[]int{65534},
 			[]byte{byte(OpGetLcl), 255, 254},
 		},
+		{
+			OpClosure,
+			[]int{65534, 255},
+			[]byte{byte(OpClosure), 255, 254, 255},
+		},
 	}
 
 	for _, tt := range tests {
@@ -46,12 +51,14 @@ func TestInstructionString(t *testing.T) {
 		Make(OpGetLcl, 1),
 		Make(OpConst, 2),
 		Make(OpConst, 65534),
+		Make(OpClosure, 65535, 255),
 	}
 
 	expected := `0000 OpAdd
 0001 OpGetLcl 1
 0004 OpConst 2
 0007 OpConst 65534
+0010 OpClosure 65535 255
 `
 	concatted := Instructions{}
 	for _, inst := range instructions {

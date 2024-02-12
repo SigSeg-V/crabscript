@@ -14,33 +14,35 @@ type Opcode byte
 
 // Enum of opcodes in use
 const (
-	OpConst  Opcode = iota // max of 65536 constants in constant pa
-	OpAdd                  // add the topmost 2 elem of stack
-	OpSub                  // add the topmost 2 elem of stack
-	OpMul                  // add the topmost 2 elem of stack
-	OpDiv                  // add the topmost 2 elem of stack
-	OpPop                  // cleans the stack after an expression
-	OpTrue                 // represents `true` literal
-	OpFalse                // represents `false` literal
-	OpEq                   // equals comparator
-	OpNe                   // not equals comparator
-	OpGt                   // greater than comparator
-	OpNeg                  // negation operator
-	OpBang                 // `not` operator
-	OpJmp                  // jump operator, for conditionals and
-	OpJmpNt                // jump when not true, for conditionals
-	OpNull                 // *NULL*
-	OpGetGbl               // getting bound variables from stack
-	OpSetGbl               // setting bound variables from stack
-	OpArray                // list collection type
-	OpDict                 // dictionary type
-	OpIdx                  // index or subscript operator
-	OpCall                 // call fn
-	OpRet                  // return to branch point
-	OpRetVal               // return value to top of stack
-	OpGetLcl               // getting bound varables from the fn stack frame
-	OpSetLcl               // setting bound variables from the fn stack frame
-	OpGetBIn               // getting built in fns
+	OpConst   Opcode = iota // max of 65536 constants in constant pa
+	OpAdd                   // add the topmost 2 elem of stack
+	OpSub                   // add the topmost 2 elem of stack
+	OpMul                   // add the topmost 2 elem of stack
+	OpDiv                   // add the topmost 2 elem of stack
+	OpPop                   // cleans the stack after an expression
+	OpTrue                  // represents `true` literal
+	OpFalse                 // represents `false` literal
+	OpEq                    // equals comparator
+	OpNe                    // not equals comparator
+	OpGt                    // greater than comparator
+	OpNeg                   // negation operator
+	OpBang                  // `not` operator
+	OpJmp                   // jump operator, for conditionals and
+	OpJmpNt                 // jump when not true, for conditionals
+	OpNull                  // *NULL*
+	OpGetGbl                // getting bound variables from stack
+	OpSetGbl                // setting bound variables from stack
+	OpArray                 // list collection type
+	OpDict                  // dictionary type
+	OpIdx                   // index or subscript operator
+	OpCall                  // call fn
+	OpRet                   // return to branch point
+	OpRetVal                // return value to top of stack
+	OpGetLcl                // getting bound varables from the fn stack frame
+	OpSetLcl                // setting bound variables from the fn stack frame
+	OpGetBIn                // getting built in fns
+	OpClosure               // anonymous functions
+	OpGetFree               // getting variables from closures
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -77,7 +79,11 @@ var definitions = map[Opcode]*Definition{
 	OpGetLcl: {"OpGetLcl", []int{2}}, // getting bound varables from the fn stack frame
 	OpSetLcl: {"OpSetLcl", []int{2}}, // setting bound variables from the fn stack frame
 	OpGetBIn: {"OpGetBIn", []int{1}}, // get built in fns
-
+	// anonymous functions, op 1 is const index,
+	// op 2 is number of free vars that need to
+	//be moved with the closure
+	OpClosure: {"OpClosure", []int{2, 1}},
+	OpGetFree: {"OpGetFree", []int{1}}, // getting variables from closures
 }
 
 // Lookup returns relevant debugging info for op if available
@@ -121,6 +127,8 @@ func (instructions Instructions) fmtInstruction(def *Definition, operands []int)
 		return def.Name
 	case 1:
 		return fmt.Sprintf("%s %d", def.Name, operands[0])
+	case 2:
+		return fmt.Sprintf("%s %d %d", def.Name, operands[0], operands[1])
 	}
 
 	return fmt.Sprintf("ERROR: unhandled operandCount for %s\n", def.Name)

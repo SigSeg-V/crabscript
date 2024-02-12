@@ -213,7 +213,7 @@ func TestLetStatementScope(t *testing.T) {
 			expectedInstructions: []code.Instructions{
 				code.Make(code.OpConst, 0),
 				code.Make(code.OpSetGbl, 0),
-				code.Make(code.OpConst, 1),
+				code.Make(code.OpClosure, 1, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -233,7 +233,7 @@ func TestLetStatementScope(t *testing.T) {
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 1),
+				code.Make(code.OpClosure, 1, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -260,10 +260,72 @@ func TestLetStatementScope(t *testing.T) {
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 2),
+				code.Make(code.OpClosure, 2, 0),
 				code.Make(code.OpPop),
 			},
 		},
+	}
+	runCompilerTests(t, tests)
+}
+
+func TestClosure(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+fn(a) {
+	fn (b) { a + b }
+}
+		`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetFree, 0),
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpAdd),
+					code.Make(code.OpRetVal),
+				},
+				[]code.Instructions{
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpClosure, 0, 1),
+					code.Make(code.OpRetVal),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpClosure, 1, 0),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+            fn(a) {
+                fn(b) {
+fn(c) { a+b+c
+} }
+};
+`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetFree, 0),
+					code.Make(code.OpGetFree, 1),
+					code.Make(code.OpAdd),
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpAdd),
+					code.Make(code.OpRetVal),
+				},
+				[]code.Instructions{
+					code.Make(code.OpGetFree, 0),
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpClosure, 0, 2),
+					code.Make(code.OpRetVal),
+				},
+				[]code.Instructions{
+					code.Make(code.OpGetLcl, 0),
+					code.Make(code.OpClosure, 1, 1),
+					code.Make(code.OpRetVal),
+				}},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpClosure, 2, 0),
+				code.Make(code.OpPop),
+			}},
 	}
 	runCompilerTests(t, tests)
 }
@@ -629,7 +691,7 @@ func TestFns(t *testing.T) {
 					code.Make(code.OpRetVal),
 				}},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 2),
+				code.Make(code.OpClosure, 2, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -643,7 +705,7 @@ func TestFns(t *testing.T) {
 					code.Make(code.OpRetVal),
 				}},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 2),
+				code.Make(code.OpClosure, 2, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -658,7 +720,7 @@ func TestFns(t *testing.T) {
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 2),
+				code.Make(code.OpClosure, 2, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -672,7 +734,7 @@ func TestFnsNoRetVal(t *testing.T) {
 			input:             `fn(){}`,
 			expectedConstants: []interface{}{[]code.Instructions{code.Make(code.OpRet)}},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 0),
+				code.Make(code.OpClosure, 0, 0),
 				code.Make(code.OpPop),
 			},
 		},
@@ -691,7 +753,7 @@ func TestFnCalls(t *testing.T) {
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 1), // The compiled function code.Make(code.OpCall),
+				code.Make(code.OpClosure, 1, 0), // The compiled function code.Make(code.OpCall),
 				code.Make(code.OpCall, 0),
 				code.Make(code.OpPop),
 			},
@@ -709,10 +771,10 @@ func TestFnCalls(t *testing.T) {
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 1),  // The compiled function code.Make(code.OpSetGlobal, 0), code.Make(code.OpGetGlobal, 0),
-				code.Make(code.OpSetGbl, 0), // putting fn onto the const pool
-				code.Make(code.OpGetGbl, 0), // getting from the const pool
-				code.Make(code.OpCall, 0),   // calling fn
+				code.Make(code.OpClosure, 1, 0), // The compiled function code.Make(code.OpSetGlobal, 0), code.Make(code.OpGetGlobal, 0),
+				code.Make(code.OpSetGbl, 0),     // putting fn onto the const pool
+				code.Make(code.OpGetGbl, 0),     // getting from the const pool
+				code.Make(code.OpCall, 0),       // calling fn
 				code.Make(code.OpPop),
 			},
 		},
@@ -729,7 +791,7 @@ oneArg(69);
 				69,
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 0),
+				code.Make(code.OpClosure, 0, 0),
 				code.Make(code.OpSetGbl, 0),
 				code.Make(code.OpGetGbl, 0),
 				code.Make(code.OpConst, 1),
@@ -759,7 +821,7 @@ polyArgs(1, 2, 3, 4);
 				4,
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 0),
+				code.Make(code.OpClosure, 0, 0),
 				code.Make(code.OpSetGbl, 0),
 				code.Make(code.OpGetGbl, 0),
 				code.Make(code.OpConst, 1),
@@ -808,7 +870,7 @@ fn() { len([]) };
 				},
 			},
 			expectedInstructions: []code.Instructions{
-				code.Make(code.OpConst, 0),
+				code.Make(code.OpClosure, 0),
 				code.Make(code.OpPop),
 			},
 		},
