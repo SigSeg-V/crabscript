@@ -354,6 +354,7 @@ func TestBuiltinFunctions(t *testing.T) {
 		{`len("hello world")`, 11},
 		{`len(1)`, "argument to `len` not supported, got Integer"},
 		{`len("one", "two")`, "wrong number of arguments. got 2, want 1"},
+		{`puts("one")`, nil},
 	}
 	for _, tt := range tests {
 		evaluated := testEval(tt.input)
@@ -373,7 +374,12 @@ func TestBuiltinFunctions(t *testing.T) {
 				t.Errorf("wrong error message. expected=%q, got=%q",
 					expected, errObj.Message)
 			}
+		case nil:
+			if evaluated.Type() != Null.Type() {
+				t.Errorf("expected nil got %s", evaluated.Type())
+			}
 		}
+
 	}
 }
 

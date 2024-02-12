@@ -40,6 +40,7 @@ const (
 	OpRetVal               // return value to top of stack
 	OpGetLcl               // getting bound varables from the fn stack frame
 	OpSetLcl               // setting bound variables from the fn stack frame
+	OpGetBIn               // getting built in fns
 )
 
 // Definition - debugging info and humand readable opcode for the operation
@@ -75,6 +76,7 @@ var definitions = map[Opcode]*Definition{
 	OpRetVal: {"OpRetVal", []int{}},  // push value to top of stack
 	OpGetLcl: {"OpGetLcl", []int{2}}, // getting bound varables from the fn stack frame
 	OpSetLcl: {"OpSetLcl", []int{2}}, // setting bound variables from the fn stack frame
+	OpGetBIn: {"OpGetBIn", []int{1}}, // get built in fns
 
 }
 

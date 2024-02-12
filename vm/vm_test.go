@@ -241,7 +241,7 @@ func runVmTests(t *testing.T, tests []vmTestCase) {
 		vm := New(comp.Bytecode())
 		err = vm.Run()
 		if err != nil {
-			t.Fatalf("vm error: %S", err)
+			t.Fatalf("vm error: %s", err)
 		}
 
 		stackElem := vm.LastPoppedStackElem()
@@ -396,6 +396,88 @@ c; };
 	runVmTests(t, tests)
 }
 
+func TestCallFnWithWrongArgs(t *testing.T) {
+	tests := []vmTestCase{
+		{
+			input:    `fn() { 1; }(1);`,
+			expected: `wrong number of arguments: want 0 got 1`,
+		},
+		{
+			input:    `fn(a) { a; }();`,
+			expected: `wrong number of arguments: want 1 got 0`,
+		},
+		{
+			input:    `fn(a, b) { a + b; }(1);`,
+			expected: `wrong number of arguments: want 2 got 1`,
+		},
+	}
+	runVmErrTests(t, tests)
+}
+
+func TestBuiltinFns(t *testing.T) {
+	tests := []vmTestCase{
+		{`len([])`, 0},
+		{`len("four")`, 4},
+		{`len(1)`,
+
+			&object.Error{
+				Message: "argument to `len` not supported, got Integer",
+			},
+		},
+		{
+			`len("one", "two")`,
+			&object.Error{
+				Message: "wrong number of arguments. got 2, want 1",
+			},
+		},
+		{`len([1, 2, 3])`, 3},
+		{`len([])`, 0},
+		{`puts("hello", "world!")`, Null},
+		{`first([1, 2, 3])`, 1},
+		{`first([])`, Null},
+		{`first(1)`,
+			&object.Error{
+				Message: "argument to `first` is invalid, got Integer",
+			},
+		},
+		{`last([1, 2, 3])`, 3},
+		{`last([])`, Null},
+		{`last(1)`,
+			&object.Error{
+				Message: "argument to `last` is invalid, got Integer",
+			},
+		},
+		{`tail([1, 2, 3])`, []int{2, 3}},
+		{`tail([])`, Null},
+		{`push([], 1)`, []int{1}},
+		{`push(1, 1)`,
+			&object.Error{
+				Message: "argument to `push` must be Array, got Integer",
+			},
+		},
+	}
+	runVmTests(t, tests)
+}
+
+func runVmErrTests(t *testing.T, tests []vmTestCase) {
+	t.Helper()
+
+	for _, test := range tests {
+		pgm := parse(test.input)
+		cmp := compiler.New()
+		if err := cmp.Compile(pgm); err != nil {
+			t.Fatalf("compiler error: %s", err)
+		}
+
+		vm := New(cmp.Bytecode())
+		if err := vm.Run(); err == nil {
+			t.Fatalf("expected VM error")
+		} else if err.Error() != test.expected {
+			t.Fatalf("unexpected VM error,\nwant %s\ngot %s", test.expected, err)
+		}
+	}
+}
+
 func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {
 	t.Helper()
 
@@ -457,6 +539,16 @@ func testExpectedObj(t *testing.T, expected interface{}, actual object.Object) {
 			if err := testIntegerObject(eVal, pair.Value); err != nil {
 				t.Errorf("value got same, got %v want %v", pair.Value, eVal)
 			}
+		}
+
+	case *object.Error:
+		errObj, ok := actual.(*object.Error)
+		if !ok {
+			t.Errorf("object is not Error: %T(%+v)", actual, actual)
+			return
+		}
+		if errObj.Message != expected.Message {
+			t.Errorf("wrong error message,\ngot:  %s\nwant: %s", errObj.Message, expected.Message)
 		}
 	}
 }

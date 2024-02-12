@@ -19,4 +19,5 @@ const (
 	ArrayObj    = "Array"
 	DictObj     = "Dict"
 	CompFnObj   = "CompFnObj"
+	ClosureObj  = "ClosureObj"
 )

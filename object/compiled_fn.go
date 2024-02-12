@@ -7,7 +7,8 @@ import (
 
 type CompFn struct {
 	Instructions  code.Instructions // set of instructions to call when fn is called
-	LocalVarCount int               // Count of variables bound inside the fn
+	LocalVarCount int               // count of variables bound inside the fn
+	ParamCount    int               // count of params expected in the fn
 }
 
 func (cf *CompFn) Type() ObjectType {

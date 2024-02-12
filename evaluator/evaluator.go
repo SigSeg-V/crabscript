@@ -169,7 +169,11 @@ func callFunction(function object.Object, args []object.Object) object.Object {
 
 	// builtin interpreter fns
 	case *object.Builtin:
-		return function.Fn(args...)
+		if res := function.Fn(args...); res != nil {
+			return res
+		}
+		return Null
+
 	default:
 		return newError("not a function: %s", function.Type())
 	}
@@ -212,7 +216,7 @@ func evalIdentifier(node *ast.Identifier, env *object.Environment) object.Object
 		return val
 	}
 
-	if builtin, ok := builtins[node.Value]; ok {
+	if builtin := object.GetBuiltinByName(node.String()); builtin != nil {
 		return builtin
 	}
 

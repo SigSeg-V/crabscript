@@ -41,9 +41,15 @@ func New() *Compiler {
 		previousInstruction: EmittedInstruction{},
 	}
 
+	// defining all da builtins
+	st := NewSymbolTable()
+	for i, v := range object.Builtins {
+		st.DefineBuiltin(i, v.Name)
+	}
+
 	return &Compiler{
 		constants:   []object.Object{},
-		symbolTable: NewSymbolTable(),
+		symbolTable: st,
 		scopes:      []CompilationScope{mainScope},
 		scopeIndex:  0,
 	}
@@ -205,11 +211,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		if !ok {
 			return fmt.Errorf("unresolved symbol: %v", node.Value)
 		}
-		if symbol.Scope == LocalScope {
-			c.emit(code.OpGetLcl, symbol.Index)
-		} else {
-			c.emit(code.OpGetGbl, symbol.Index)
-		}
+		c.resolveSymbol(symbol)
 
 	case *ast.StringLiteral:
 		str := &object.String{Value: node.Value}
@@ -284,6 +286,7 @@ func (c *Compiler) Compile(node ast.Node) error {
 		compiledFn := &object.CompFn{
 			Instructions:  instructions,
 			LocalVarCount: numLocals,
+			ParamCount:    len(node.Parameters),
 		}
 		c.emit(code.OpConst, c.addConstant(compiledFn))
 
@@ -418,4 +421,16 @@ func (c *Compiler) replaceLastPopWithRet() {
 	c.replaceInstruction(lastPos, code.Make(code.OpRetVal))
 
 	c.scopes[c.scopeIndex].lastInstruction.Opcode = code.OpRetVal
+}
+
+// resolve definitions for builtin, local and global identifiers
+func (c *Compiler) resolveSymbol(s Symbol) {
+	switch s.Scope {
+	case GlobalScope:
+		c.emit(code.OpGetGbl, s.Index)
+	case LocalScope:
+		c.emit(code.OpGetLcl, s.Index)
+	case BuiltinScope:
+		c.emit(code.OpGetBIn, s.Index)
+	}
 }

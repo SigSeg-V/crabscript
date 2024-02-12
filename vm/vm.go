@@ -214,17 +214,9 @@ func (vm *Vm) Run() error {
 		case code.OpCall:
 			numArgs := int(code.ReadUint8(ins[ip+1:]))
 			vm.currentFrame().ip++ // skipping num of args for now
-
-			fn, ok := vm.stack[vm.sp-1-numArgs].(*object.CompFn)
-			if !ok {
-				return fmt.Errorf("not a function")
+			if err := vm.execCall(numArgs); err != nil {
+				return err
 			}
-
-			frame := NewFrame(fn, vm.sp-numArgs) // set up new frame at stack pointer
-			vm.pushFrame(frame)
-
-			// allocating space for the fn's local bindings on the stack
-			vm.sp = frame.basePtr + fn.LocalVarCount
 
 		case code.OpRetVal:
 			// retrieve val from fn
@@ -265,9 +257,45 @@ func (vm *Vm) Run() error {
 
 			vm.stack[basePtr+int(lclIdx)] = vm.pop()
 
+		case code.OpGetBIn:
+			bindex := code.ReadUint8(ins[ip+1:])
+			vm.currentFrame().ip += 1
+
+			def := object.Builtins[bindex]
+			if err := vm.push(def.Builtin); err != nil {
+				return err
+			}
+
 		}
 	}
 
+	return nil
+}
+
+func (vm *Vm) execCall(numArgs int) error {
+	fn := vm.stack[vm.sp-1-numArgs]
+	switch fn := fn.(type) {
+	case *object.CompFn:
+		return vm.callFn(fn, numArgs)
+
+	case *object.Builtin:
+		return vm.callBIn(fn, numArgs)
+
+	default:
+		return fmt.Errorf("not a function or builtin")
+
+	}
+}
+
+func (vm *Vm) callFn(fn *object.CompFn, numArgs int) error {
+	if numArgs != fn.ParamCount {
+		return fmt.Errorf("wrong number of arguments: want %d got %d", fn.ParamCount, numArgs)
+	}
+	frame := NewFrame(fn, vm.sp-numArgs) // set up new frame at stack pointer
+	vm.pushFrame(frame)
+
+	// allocating space for the fn's local bindings on the stack
+	vm.sp = frame.basePtr + fn.LocalVarCount
 	return nil
 }
 
@@ -522,4 +550,22 @@ func (vm *Vm) pushFrame(f *Frame) {
 func (vm *Vm) popFrame() *Frame {
 	vm.frameIndex--
 	return vm.frames[vm.frameIndex]
+}
+
+func (vm *Vm) callBIn(fn *object.Builtin, argNum int) error {
+	args := vm.stack[vm.sp-argNum : vm.sp]
+	res := fn.Fn(args...)
+
+	if res != nil {
+		err := vm.push(res)
+		if err != nil {
+			return err
+		}
+	} else {
+		err := vm.push(Null)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

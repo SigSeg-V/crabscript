@@ -775,6 +775,47 @@ polyArgs(1, 2, 3, 4);
 	runCompilerTests(t, tests)
 }
 
+func TestBuiltInFn(t *testing.T) {
+	tests := []compilerTestCase{
+		{
+			input: `
+len([]);
+push([], 1);
+			`,
+			expectedConstants: []interface{}{1},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpGetBIn, 0),
+				code.Make(code.OpArray, 0),
+				code.Make(code.OpCall, 1),
+				code.Make(code.OpPop),
+				code.Make(code.OpGetBIn, 4),
+				code.Make(code.OpArray, 0),
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpCall, 2),
+				code.Make(code.OpPop),
+			},
+		},
+		{
+			input: `
+fn() { len([]) };
+			`,
+			expectedConstants: []interface{}{
+				[]code.Instructions{
+					code.Make(code.OpGetBIn, 0),
+					code.Make(code.OpArray, 0),
+					code.Make(code.OpCall, 1),
+					code.Make(code.OpRetVal),
+				},
+			},
+			expectedInstructions: []code.Instructions{
+				code.Make(code.OpConst, 0),
+				code.Make(code.OpPop),
+			},
+		},
+	}
+	runCompilerTests(t, tests)
+}
+
 func concatInstructions(s []code.Instructions) code.Instructions {
 	out := code.Instructions{}
 	for _, ins := range s {
