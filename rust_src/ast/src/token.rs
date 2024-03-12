@@ -1,4 +1,4 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 use crate::TokenKind::{Function, Let};
 
 #[derive(Debug, Eq, PartialEq)]
@@ -10,6 +10,8 @@ pub enum TokenKind {
     // identifiers / literals
     Identifier,
     Integer,
+    True,
+    False,
 
     // operators
     Bind,
@@ -20,6 +22,8 @@ pub enum TokenKind {
     Slash,
     Lt,
     Gt,
+    Eq,
+    NEq,
 
     // delimiters
     Comma,
@@ -28,15 +32,19 @@ pub enum TokenKind {
     RParen,
     LBrace,
     RBrace,
+
+    // keywords
     Function,
     Let,
+    If,
+    Else,
+    Return,
 }
 
 #[derive(Debug)]
 pub struct Token {
     pub kind: TokenKind,
     pub literal: Box<str>,
-    pub keywords: HashMap<Box<str>, TokenKind>, // relating the string to it's enum
 }
 
 impl Default for Token {
@@ -44,7 +52,6 @@ impl Default for Token {
         Token {
             kind: TokenKind::Illegal,
             literal: Box::from(""),
-            keywords: HashMap::new(),
         }
     }
 }
@@ -56,8 +63,13 @@ impl Token {
 
     pub fn get_keyword<S: AsRef<str>>(kw: S) -> Option<TokenKind> {
         match kw.as_ref() {
-            "fn" => Some(Function),
-            "let" => Some(Let),
+            "fn" => Some(TokenKind::Function),
+            "let" => Some(TokenKind::Let),
+            "true" => Some(TokenKind::True),
+            "false" => Some(TokenKind::False),
+            "return" => Some(TokenKind::Return),
+            "if" => Some(TokenKind::If),
+            "else" => Some(TokenKind::Else),
             _ => None,
         }
     }

@@ -9,7 +9,7 @@ the standard library. The current implemented features are:
 - [x] Parser
 - [x] Evaluator
 - [x] REPL
-- [ ] Files
+- [x] Files
 - [x] Int
 - [x] String
 - [x] Bool
@@ -21,8 +21,8 @@ the standard library. The current implemented features are:
 
 ## Compiler
 
-- [ ] Compiler (WIP)
-- [ ] Virtual Machine (WIP)
+- [x] Compiler
+- [x] Virtual Machine
 
 ## About
 The parser is using [Pratt's algorithm](https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html), 
